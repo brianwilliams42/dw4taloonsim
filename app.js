@@ -248,9 +248,19 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('Content-Type') || '';
+    let data = null;
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const message = (await response.text()).trim();
+      throw new Error(
+        message || 'Simulation failed: server returned an unexpected response format.',
+      );
+    }
+
     if (!response.ok) {
-      throw new Error(data.error || 'Simulation failed.');
+      throw new Error(data?.error || 'Simulation failed.');
     }
 
     renderSummaries(data.summaries ?? []);

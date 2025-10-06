@@ -88,6 +88,12 @@ class TaloonRequestHandler(SimpleHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
         except json.JSONDecodeError:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON payload."})
+        except Exception as exc:  # pragma: no cover - defensive
+            self.log_error("Unexpected error while running simulation: %s", exc)
+            self._send_json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": "Simulation failed due to an unexpected server error."},
+            )
 
     # ------------------------------------------------------------------
     # Helpers
