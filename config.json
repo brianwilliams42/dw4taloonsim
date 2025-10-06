@@ -13,6 +13,6 @@
   "constraints": {
     "min_threshold": 1265,
     "max_threshold": 1875,
-    "time_bucket_seconds": 15
+    "time_bucket_seconds": 30
   }
 }
