@@ -222,9 +222,14 @@ function planGreedyPurchase({
       break;
     }
 
+    const hasAbacusThreshold =
+      normalizedAbacus && normalizedAbacus.threshold != null;
+    const isAbacusItem = hasAbacusThreshold
+      ? ABACUS_NAME_PATTERN.test(candidate.item.name)
+      : false;
+
     const priceCutoff =
-      normalizedAbacus &&
-      normalizedAbacus.threshold != null &&
+      hasAbacusThreshold &&
       normalizedAbacus.cutoff != null &&
       abaciInPlan >= normalizedAbacus.threshold
         ? normalizedAbacus.cutoff
@@ -234,22 +239,31 @@ function planGreedyPurchase({
       continue;
     }
 
-    const maxCopies = Math.min(
+    let maxCopies = Math.min(
       Math.floor(availableGold / candidate.item.cost),
       capacity - plan.totalItems
     );
+
+    if (hasAbacusThreshold && isAbacusItem) {
+      const remainingAbaci = normalizedAbacus.threshold - abaciInPlan;
+      if (remainingAbaci <= 0) {
+        continue;
+      }
+      maxCopies = Math.min(maxCopies, remainingAbaci);
+    }
 
     if (maxCopies <= 0) {
       continue;
     }
 
-    const targetList = candidate.location === 'near' ? plan.nearItems : plan.farItems;
+    const targetList =
+      candidate.location === 'near' ? plan.nearItems : plan.farItems;
     for (let index = 0; index < maxCopies; index += 1) {
       targetList.push(candidate.item);
       plan.totalCost += candidate.item.cost;
       plan.totalItems += 1;
       availableGold -= candidate.item.cost;
-      if (normalizedAbacus && ABACUS_NAME_PATTERN.test(candidate.item.name)) {
+      if (isAbacusItem) {
         abaciInPlan += 1;
       }
     }
