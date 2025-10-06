@@ -83,6 +83,7 @@ export const CONSTANTS = Object.freeze({
   TIME_EAT_LUNCH: 3.0,
   TIME_RETURN_FOR_SLEEP: 8.7,
   TIME_SLEEP_ONE_NIGHT: 7.35,
+  TIME_INITIAL_SHOP_PURCHASE_AND_TRAVEL: 50.0,
   INVENTORY_CAPACITY: 8,
   SALE_PROBABILITY_PER_NIGHT: 0.75,
   CRITICAL_RETURN_RANGE: [1.5, 2.0],
@@ -199,6 +200,43 @@ function chooseShop({ availableGold, useFarShop }) {
   );
 
   return hasAffordableFarItem ? 'far' : 'near';
+}
+
+function maxAffordableItemCost(candidates, availableGold) {
+  let maxCost = Number.NEGATIVE_INFINITY;
+  for (const candidate of candidates) {
+    if (candidate.item.cost <= availableGold) {
+      maxCost = Math.max(maxCost, candidate.item.cost);
+    }
+  }
+  return maxCost;
+}
+
+function planInitialWalkPurchase({ gold, useFarShop }) {
+  const availableGold = Math.floor(gold);
+  const capacity = CONSTANTS.INVENTORY_CAPACITY;
+
+  if (availableGold <= 0 || capacity <= 0) {
+    return createEmptyPlan();
+  }
+
+  const nearCandidates = buildPurchaseCandidates('near');
+  const farCandidates = buildPurchaseCandidates('far');
+
+  const nearMax = maxAffordableItemCost(nearCandidates, availableGold);
+  const farMax = useFarShop
+    ? maxAffordableItemCost(farCandidates, availableGold)
+    : Number.NEGATIVE_INFINITY;
+
+  const targetShop = farMax > nearMax ? 'far' : 'near';
+  const candidates = targetShop === 'far' ? farCandidates : nearCandidates;
+
+  return planGreedyPurchase({
+    candidates,
+    availableGold,
+    capacity,
+    abacusConfig: null,
+  });
 }
 
 function createEmptyPlan() {
@@ -442,6 +480,7 @@ function runPhase2(rng, config) {
   let totalTrips = 0;
   let pendingProfits = 0;
   let netaInventory = [];
+  let initialWalkHandled = false;
 
   while (gold < finalTarget || pendingProfits > 0 || netaInventory.length) {
     const cycleStartGold = gold;
@@ -465,14 +504,25 @@ function runPhase2(rng, config) {
     const nightSummaries = [];
 
     while (true) {
-      const plan = planPurchases({
-        gold,
-        useFarShop,
-        purchaseStrategy,
-        abacusCountThreshold,
-        abacusPriceCutoff,
-      });
+      let isInitialWalk = false;
+      let plan;
+      if (!initialWalkHandled) {
+        plan = planInitialWalkPurchase({ gold, useFarShop });
+        initialWalkHandled = true;
+        isInitialWalk = true;
+      } else {
+        plan = planPurchases({
+          gold,
+          useFarShop,
+          purchaseStrategy,
+          abacusCountThreshold,
+          abacusPriceCutoff,
+        });
+      }
       if (plan.totalItems === 0) {
+        if (isInitialWalk) {
+          continue;
+        }
         break;
       }
 
@@ -490,7 +540,11 @@ function runPhase2(rng, config) {
       totalTrips += 1;
       purchasedAny = true;
 
-      timeSpent += CONSTANTS.TIME_CLAIM_PROFITS_AND_TO_NEAR_SHOP;
+      if (isInitialWalk) {
+        timeSpent += CONSTANTS.TIME_INITIAL_SHOP_PURCHASE_AND_TRAVEL;
+      } else {
+        timeSpent += CONSTANTS.TIME_CLAIM_PROFITS_AND_TO_NEAR_SHOP;
+      }
 
       for (const item of plan.nearItems) {
         timeSpent += item.equippable
@@ -499,7 +553,9 @@ function runPhase2(rng, config) {
       }
 
       if (plan.visitsFarShop) {
-        timeSpent += CONSTANTS.TIME_TRAVEL_EXTRA_TO_FAR_SHOP;
+        if (!isInitialWalk) {
+          timeSpent += CONSTANTS.TIME_TRAVEL_EXTRA_TO_FAR_SHOP;
+        }
         for (const item of plan.farItems) {
           timeSpent += item.equippable
             ? CONSTANTS.TIME_PURCHASE_EQUIPPABLE
@@ -507,9 +563,11 @@ function runPhase2(rng, config) {
         }
       }
 
-      timeSpent += CONSTANTS.TIME_RETURN_TO_NETA_FROM_NEAR;
-      if (plan.visitsFarShop) {
-        timeSpent += CONSTANTS.TIME_RETURN_EXTRA_FROM_FAR;
+      if (!isInitialWalk) {
+        timeSpent += CONSTANTS.TIME_RETURN_TO_NETA_FROM_NEAR;
+        if (plan.visitsFarShop) {
+          timeSpent += CONSTANTS.TIME_RETURN_EXTRA_FROM_FAR;
+        }
       }
 
       timeSpent += CONSTANTS.TIME_EAT_LUNCH;
