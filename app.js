@@ -11,10 +11,26 @@ const resultsEl = document.getElementById('results');
 const runButton = document.getElementById('run-btn');
 const resetButton = document.getElementById('reset-btn');
 const thresholdHint = document.getElementById('threshold-hint');
+const minShopGoldInput = document.getElementById('min-shop-gold');
+const useFarShopInput = document.getElementById('use-far-shop');
+
+const REQUIRED_SHOP_PURCHASE_GOLD = 35000;
+const REQUIRED_WING_COST = 25;
+const REQUIRED_NEAR_ITEM_COST = 550;
+const REQUIRED_FAR_ITEM_COST = 180;
 
 let defaults = null;
 let constraints = null;
 let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
+
+function generateRandomSeed() {
+  if (globalThis.crypto?.getRandomValues) {
+    const buffer = new Uint32Array(1);
+    globalThis.crypto.getRandomValues(buffer);
+    return buffer[0] >>> 0;
+  }
+  return Math.floor(Math.random() * 0xffffffff) >>> 0;
+}
 
 function resolveBucketSeconds() {
   const configured = constraints?.time_bucket_seconds;
@@ -58,14 +74,14 @@ function applyDefaults() {
   }
   form.reset();
   document.getElementById('start-gold').value = defaults.start_gold;
-  document.getElementById('min-shop-gold').value = defaults.min_shop_gold;
+  minShopGoldInput.value = defaults.min_shop_gold;
   document.getElementById('final-target').value = defaults.final_target;
   document.getElementById('thresholds').value = defaults.armor_thresholds.join(', ');
   document.getElementById('nights').value = defaults.nights_to_sleep;
   document.getElementById('runs').value = defaults.runs;
   document.getElementById('trip-cutoff').value = defaults.additional_trip_cutoff ?? '';
   document.getElementById('seed').value = defaults.seed ?? '';
-  document.getElementById('use-far-shop').checked = Boolean(defaults.use_far_shop);
+  useFarShopInput.checked = Boolean(defaults.use_far_shop);
   if (constraints) {
     thresholdHint.textContent =
       `Valid armor thresholds: ${constraints.min_threshold} – ${constraints.max_threshold} (inclusive). ` +
@@ -75,6 +91,36 @@ function applyDefaults() {
   }
   clearStatus();
   resultsEl.innerHTML = '';
+  enforceMinShopGoldRequirement({ adjustValue: true });
+}
+
+function computeRequiredMinShopGold() {
+  const cheapestItemCost = useFarShopInput.checked
+    ? REQUIRED_FAR_ITEM_COST
+    : REQUIRED_NEAR_ITEM_COST;
+  return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_WING_COST + cheapestItemCost;
+}
+
+function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
+  const requiredValue = computeRequiredMinShopGold();
+  const currentValue = Number.parseInt(minShopGoldInput.value, 10);
+
+  minShopGoldInput.title = `Taloon needs ${requiredValue.toLocaleString()} gold before buying the shop with the current shop selection.`;
+
+  if (adjustValue && (Number.isNaN(currentValue) || currentValue !== requiredValue)) {
+    minShopGoldInput.value = requiredValue;
+  }
+
+  if (Number.isNaN(currentValue)) {
+    minShopGoldInput.setCustomValidity('Enter the required minimum gold before buying the shop.');
+  } else if (currentValue !== requiredValue) {
+    minShopGoldInput.setCustomValidity(
+      `Minimum gold must be exactly ${requiredValue.toLocaleString()} based on your shop selection.`
+    );
+  } else {
+    minShopGoldInput.setCustomValidity('');
+  }
+
 }
 
 function setStatus(message, isError = false) {
@@ -174,6 +220,19 @@ function buildHistogram(bucketCounts) {
   return container;
 }
 
+minShopGoldInput.addEventListener('input', () => {
+  enforceMinShopGoldRequirement();
+});
+
+minShopGoldInput.addEventListener('change', () => {
+  enforceMinShopGoldRequirement();
+});
+
+useFarShopInput.addEventListener('change', () => {
+  enforceMinShopGoldRequirement({ adjustValue: true });
+  minShopGoldInput.reportValidity();
+});
+
 function createMetricRow(label, valueText, titleText) {
   const row = document.createElement('span');
   if (titleText) {
@@ -200,6 +259,45 @@ function renderSummaries(summaries) {
     return;
   }
 
+  const overallFastest = summaries.reduce((best, summary) => {
+    if (!best) {
+      return summary;
+    }
+    if (summary.fastest_time < best.fastest_time) {
+      return summary;
+    }
+    return best;
+  }, null);
+
+  if (overallFastest) {
+    const highlight = document.createElement('div');
+    highlight.className = 'results-overview';
+
+    const heading = document.createElement('h3');
+    heading.textContent = 'Overall highlight';
+    highlight.appendChild(heading);
+
+    const fastestRow = document.createElement('p');
+    const fastestLabel = document.createElement('strong');
+    fastestLabel.textContent = 'Fastest completion:';
+    fastestRow.appendChild(fastestLabel);
+
+    const fastestDetails = document.createElement('span');
+    fastestDetails.textContent = ` ${formatDuration(overallFastest.fastest_time)} (threshold ${overallFastest.threshold}). `;
+    fastestRow.appendChild(fastestDetails);
+
+    const averageDetails = document.createElement('span');
+    averageDetails.textContent = `Average run: ${formatDuration(overallFastest.average_time)} (σ ${formatDuration(
+      overallFastest.std_dev_time
+    )}).`;
+    fastestRow.appendChild(averageDetails);
+    fastestRow.title =
+      'Fastest single run across all thresholds along with the average and standard deviation for that threshold.';
+    highlight.appendChild(fastestRow);
+
+    resultsEl.appendChild(highlight);
+  }
+
   summaries.forEach((summary) => {
     const card = document.createElement('article');
     card.className = 'summary-card';
@@ -213,8 +311,8 @@ function renderSummaries(summaries) {
 
     const timeRow = createMetricRow(
       'Average time',
-      `${summary.average_time.toFixed(2)}s (σ ${summary.std_dev_time.toFixed(2)}s)`,
-      'Average in-game seconds required to finish each simulation. The σ value is the standard deviation across runs.'
+      `${formatDuration(summary.average_time)} (σ ${formatDuration(summary.std_dev_time)})`,
+      `Average in-game seconds required to finish each simulation. The σ value is the standard deviation across runs. (~${summary.average_time.toFixed(2)}s; σ ${summary.std_dev_time.toFixed(2)}s)`
     );
     grid.appendChild(timeRow);
 
@@ -259,23 +357,28 @@ form.addEventListener('submit', async (event) => {
   setStatus('Running simulations…');
 
   try {
+    const manualSeed = parseOptionalNumber(document.getElementById('seed').value);
+    const resolvedSeed = manualSeed ?? generateRandomSeed();
+
     const payload = {
       start_gold: Number.parseInt(document.getElementById('start-gold').value, 10),
-      min_shop_gold: Number.parseInt(document.getElementById('min-shop-gold').value, 10),
+      min_shop_gold: Number.parseInt(minShopGoldInput.value, 10),
       final_target: Number.parseInt(document.getElementById('final-target').value, 10),
       armor_thresholds: parseThresholds(document.getElementById('thresholds').value),
       nights_to_sleep: Number.parseInt(document.getElementById('nights').value, 10),
       runs: Number.parseInt(document.getElementById('runs').value, 10),
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
-      seed: parseOptionalNumber(document.getElementById('seed').value),
-      use_far_shop: document.getElementById('use-far-shop').checked,
+      seed: resolvedSeed,
+      use_far_shop: useFarShopInput.checked,
       time_bucket_seconds: bucketSeconds,
     };
 
-    const summaries = runSimulation(payload);
+    const result = runSimulation(payload);
 
-    renderSummaries(summaries ?? []);
-    setStatus(`Completed ${payload.runs} run(s) for ${payload.armor_thresholds.length} threshold option(s).`);
+    renderSummaries(result?.summaries ?? []);
+    setStatus(
+      `Completed ${payload.runs} run(s) for ${payload.armor_thresholds.length} threshold option(s) using seed ${result?.seed ?? resolvedSeed}.`
+    );
   } catch (error) {
     console.error(error);
     setStatus(error.message || 'Simulation failed.', true);
