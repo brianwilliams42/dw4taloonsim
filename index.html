@@ -18,15 +18,15 @@
         <form id="sim-form" class="form-grid">
           <fieldset>
             <legend>Phase breakpoints</legend>
-            <label class="field">
+            <label class="field" title="Gold Taloon has on hand when the simulation begins.">
               <span>Starting gold</span>
               <input id="start-gold" name="start-gold" type="number" min="1" required />
             </label>
-            <label class="field">
+            <label class="field" title="Minimum gold to accumulate from iron plate sales before purchasing the shop.">
               <span>Minimum gold before buying shop</span>
               <input id="min-shop-gold" name="min-shop-gold" type="number" min="1" required />
             </label>
-            <label class="field">
+            <label class="field" title="Target amount of gold after Neta finishes selling the inventory.">
               <span>Final gold target after Neta sells</span>
               <input id="final-target" name="final-target" type="number" min="1" required />
             </label>
@@ -34,27 +34,27 @@
 
           <fieldset>
             <legend>Simulation controls</legend>
-            <label class="field">
+            <label class="field" title="Sale price thresholds that determine when Taloon accepts an armor offer. Separate multiple values with commas.">
               <span>Armor offer thresholds (comma separated)</span>
               <input id="thresholds" name="thresholds" type="text" required />
             </label>
-            <label class="field">
+            <label class="field" title="Number of nights Taloon sleeps before checking back on Neta's sales.">
               <span>Nights to sleep between profit collections</span>
               <input id="nights" name="nights" type="number" min="1" required />
             </label>
-            <label class="field">
+            <label class="field" title="How many Monte Carlo runs to perform for each threshold value.">
               <span>Monte Carlo runs per threshold</span>
               <input id="runs" name="runs" type="number" min="1" required />
             </label>
-            <label class="field">
+            <label class="field" title="Optional gold amount below which Taloon skips extra shopping trips in the same loop.">
               <span>Additional trip cutoff (optional)</span>
               <input id="trip-cutoff" name="trip-cutoff" type="number" min="0" placeholder="Leave blank for none" />
             </label>
-            <label class="field">
+            <label class="field" title="Provide a deterministic random seed value. Leave blank for a different random sequence each run.">
               <span>Random seed (optional)</span>
               <input id="seed" name="seed" type="number" placeholder="Random each run" />
             </label>
-            <label class="checkbox">
+            <label class="checkbox" title="Include the farther shop in Taloon's purchase planning, adding travel time but unlocking more inventory options.">
               <input id="use-far-shop" name="use-far-shop" type="checkbox" />
               <span>Allow buying from the further shop</span>
             </label>

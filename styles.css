@@ -101,6 +101,16 @@ fieldset {
   font-weight: 600;
 }
 
+.field span,
+.checkbox span {
+  color: #0b1d3c;
+}
+
+body.dark .field span,
+body.dark .checkbox span {
+  color: #dce7ff;
+}
+
 .field input[type="number"],
 .field input[type="text"] {
   font: inherit;
@@ -210,6 +220,10 @@ body.dark .summary-card {
 .summary-grid span {
   display: flex;
   justify-content: space-between;
+}
+
+.summary-grid span > span:last-of-type {
+  text-align: right;
 }
 
 .summary-grid strong {

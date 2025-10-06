@@ -408,6 +408,10 @@ export function runSimulation(config) {
     const shopPurchaseTrips = results.map(
       (result) => result.shopPurchaseTrips
     );
+    const averageShopCycles = mean(shopProfitCycles);
+    const averageShopTrips = mean(shopPurchaseTrips);
+    const averageTripsPerCycle =
+      averageShopCycles === 0 ? 0 : averageShopTrips / averageShopCycles;
 
     const bucketMap = new Map();
     for (const time of times) {
@@ -427,8 +431,9 @@ export function runSimulation(config) {
       average_time: mean(times),
       std_dev_time: populationStdDev(times),
       average_armor_restock_cycles: mean(armorRestockCycles),
-      average_shop_profit_cycles: mean(shopProfitCycles),
-      average_shop_purchase_trips: mean(shopPurchaseTrips),
+      average_shop_cycles: averageShopCycles,
+      average_shop_trips: averageShopTrips,
+      average_shop_trips_per_cycle: averageTripsPerCycle,
       bucket_counts: bucketCounts,
     });
   }

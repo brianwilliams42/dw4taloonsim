@@ -16,10 +16,18 @@ let defaults = null;
 let constraints = null;
 let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
 
+function resolveBucketSeconds() {
+  const configured = constraints?.time_bucket_seconds;
+  if (typeof configured === 'number' && Number.isFinite(configured)) {
+    return Math.max(DEFAULT_TIME_BUCKET_SECONDS, configured);
+  }
+  return DEFAULT_TIME_BUCKET_SECONDS;
+}
+
 function applyConfig(config) {
   defaults = config.defaults ?? null;
   constraints = config.constraints ?? null;
-  bucketSeconds = constraints?.time_bucket_seconds ?? bucketSeconds;
+  bucketSeconds = resolveBucketSeconds();
   applyDefaults();
 }
 
@@ -61,7 +69,9 @@ function applyDefaults() {
   if (constraints) {
     thresholdHint.textContent =
       `Valid armor thresholds: ${constraints.min_threshold} – ${constraints.max_threshold} (inclusive). ` +
-      `Time buckets are ${formatDuration(constraints.time_bucket_seconds)} each.`;
+      `Time buckets are ${formatDuration(bucketSeconds)} each.`;
+  } else {
+    thresholdHint.textContent = '';
   }
   clearStatus();
   resultsEl.innerHTML = '';
@@ -164,6 +174,23 @@ function buildHistogram(bucketCounts) {
   return container;
 }
 
+function createMetricRow(label, valueText, titleText) {
+  const row = document.createElement('span');
+  if (titleText) {
+    row.title = titleText;
+  }
+
+  const labelStrong = document.createElement('strong');
+  labelStrong.textContent = `${label}:`;
+  row.appendChild(labelStrong);
+
+  const valueSpan = document.createElement('span');
+  valueSpan.textContent = valueText;
+  row.appendChild(valueSpan);
+
+  return row;
+}
+
 function renderSummaries(summaries) {
   resultsEl.innerHTML = '';
   if (!summaries.length) {
@@ -184,21 +211,26 @@ function renderSummaries(summaries) {
     const grid = document.createElement('div');
     grid.className = 'summary-grid';
 
-    const timeRow = document.createElement('span');
-    timeRow.innerHTML = `<strong>Average time:</strong> ${summary.average_time.toFixed(2)}s (σ ${summary.std_dev_time.toFixed(2)}s)`;
+    const timeRow = createMetricRow(
+      'Average time',
+      `${summary.average_time.toFixed(2)}s (σ ${summary.std_dev_time.toFixed(2)}s)`,
+      'Average in-game seconds required to finish each simulation. The σ value is the standard deviation across runs.'
+    );
     grid.appendChild(timeRow);
 
-    const restockRow = document.createElement('span');
-    restockRow.innerHTML = `<strong>Iron-plate restock cycles:</strong> ${summary.average_armor_restock_cycles.toFixed(2)}`;
+    const restockRow = createMetricRow(
+      'Iron-plate restock cycles',
+      summary.average_armor_restock_cycles.toFixed(2),
+      'Average number of times Taloon refills iron plates before buying the shop.'
+    );
     grid.appendChild(restockRow);
 
-    const profitRow = document.createElement('span');
-    profitRow.innerHTML = `<strong>Shop profit cycles:</strong> ${summary.average_shop_profit_cycles.toFixed(2)}`;
-    grid.appendChild(profitRow);
-
-    const tripsRow = document.createElement('span');
-    tripsRow.innerHTML = `<strong>Shop purchase trips:</strong> ${summary.average_shop_purchase_trips.toFixed(2)}`;
-    grid.appendChild(tripsRow);
+    const shopLoopsRow = createMetricRow(
+      'Shop profit loops',
+      `${summary.average_shop_cycles.toFixed(2)} cycles (≈ ${summary.average_shop_trips.toFixed(2)} trips; ${summary.average_shop_trips_per_cycle.toFixed(2)} trips/loop)`,
+      'Each loop collects sales, purchases new stock, and lets Neta sell items. Trips show how often Taloon returns to the shop within those loops.'
+    );
+    grid.appendChild(shopLoopsRow);
 
     card.appendChild(grid);
 
@@ -207,6 +239,7 @@ function renderSummaries(summaries) {
     summaryEl.textContent = `Time distribution (${formatDuration(
       bucketSeconds
     )} buckets)`;
+    summaryEl.title = 'Histogram grouping completion times into 30-second intervals.';
     details.appendChild(summaryEl);
     details.appendChild(buildHistogram(summary.bucket_counts));
     card.appendChild(details);
