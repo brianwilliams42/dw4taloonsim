@@ -1,4 +1,8 @@
-import { CONSTANTS, DEFAULT_TIME_BUCKET_SECONDS } from './simulation.js';
+import {
+  CONSTANTS,
+  DEFAULT_TIME_BUCKET_SECONDS,
+  DEFAULT_PURCHASE_STRATEGY,
+} from './simulation.js';
 
 export const DEFAULT_FORM_CONFIG = {
   defaults: {
@@ -13,6 +17,9 @@ export const DEFAULT_FORM_CONFIG = {
     additional_trip_cutoff: null,
     seed: null,
     use_far_shop: false,
+    purchase_strategy: DEFAULT_PURCHASE_STRATEGY,
+    abacus_count_threshold: null,
+    abacus_price_cutoff: null,
   },
   constraints: {
     min_threshold: Math.min(...CONSTANTS.ARMOR_BUY_PRICES),

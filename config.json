@@ -10,7 +10,10 @@
     "runs": 1000,
     "additional_trip_cutoff": null,
     "seed": null,
-    "use_far_shop": false
+    "use_far_shop": false,
+    "purchase_strategy": "greedy",
+    "abacus_count_threshold": null,
+    "abacus_price_cutoff": null
   },
   "constraints": {
     "min_threshold": 1265,
