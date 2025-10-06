@@ -1,0 +1,18 @@
+{
+  "defaults": {
+    "start_gold": 30000,
+    "min_shop_gold": 35575,
+    "final_target": 26000,
+    "armor_thresholds": [1523, 1600, 1700, 1800],
+    "nights_to_sleep": 3,
+    "runs": 1000,
+    "additional_trip_cutoff": null,
+    "seed": null,
+    "use_far_shop": false
+  },
+  "constraints": {
+    "min_threshold": 1265,
+    "max_threshold": 1875,
+    "time_bucket_seconds": 15
+  }
+}

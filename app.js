@@ -9,16 +9,51 @@ let defaults = null;
 let constraints = null;
 let bucketSeconds = 15;
 
-async function fetchDefaults() {
-  const response = await fetch('config');
-  if (!response.ok) {
-    throw new Error('Unable to load defaults from the server.');
-  }
-  const data = await response.json();
-  defaults = data.defaults;
-  constraints = data.constraints;
+const STATIC_CONFIG = {
+  defaults: {
+    start_gold: 30000,
+    min_shop_gold: 35575,
+    final_target: 26000,
+    armor_thresholds: [1523, 1600, 1700, 1800],
+    nights_to_sleep: 3,
+    runs: 1000,
+    additional_trip_cutoff: null,
+    seed: null,
+    use_far_shop: false,
+  },
+  constraints: {
+    min_threshold: 1265,
+    max_threshold: 1875,
+    time_bucket_seconds: 15,
+  },
+};
+
+function applyConfig(config) {
+  defaults = config.defaults ?? null;
+  constraints = config.constraints ?? null;
   bucketSeconds = constraints?.time_bucket_seconds ?? bucketSeconds;
   applyDefaults();
+}
+
+async function fetchDefaults() {
+  const endpoints = ['config', 'config.json'];
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        continue;
+      }
+      const data = await response.json();
+      applyConfig(data);
+      return;
+    } catch (error) {
+      console.warn(`Failed to load defaults from ${endpoint}`, error);
+    }
+  }
+
+  console.warn('Falling back to built-in defaults.');
+  applyConfig(STATIC_CONFIG);
 }
 
 function applyDefaults() {
