@@ -235,22 +235,14 @@ function planGreedyPurchase({
         ? normalizedAbacus.cutoff
         : null;
 
-    if (priceCutoff != null && candidate.item.cost <= priceCutoff) {
+    if (priceCutoff != null && !isAbacusItem && candidate.item.cost <= priceCutoff) {
       continue;
     }
 
-    let maxCopies = Math.min(
+    const maxCopies = Math.min(
       Math.floor(availableGold / candidate.item.cost),
       capacity - plan.totalItems
     );
-
-    if (hasAbacusThreshold && isAbacusItem) {
-      const remainingAbaci = normalizedAbacus.threshold - abaciInPlan;
-      if (remainingAbaci <= 0) {
-        continue;
-      }
-      maxCopies = Math.min(maxCopies, remainingAbaci);
-    }
 
     if (maxCopies <= 0) {
       continue;
