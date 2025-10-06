@@ -243,6 +243,7 @@ minShopGoldInput.addEventListener('change', () => {
 useFarShopInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement({ adjustValue: true });
   minShopGoldInput.reportValidity();
+  updateAbacusFieldRequirements();
 });
 
 function updateAbacusFieldRequirements() {
@@ -252,7 +253,11 @@ function updateAbacusFieldRequirements() {
   if (!isAbacusStrategy) {
     abacusCountInput.setCustomValidity('');
     abacusPriceInput.setCustomValidity('');
+    return;
   }
+
+  abacusCountInput.setCustomValidity('');
+  abacusPriceInput.setCustomValidity('');
 }
 
 purchaseStrategyInput.addEventListener('change', () => {

@@ -97,13 +97,13 @@ export const CONSTANTS = Object.freeze({
     { name: 'Half Plate', cost: 880, equippable: true },
     { name: 'Full Plate', cost: 1250, equippable: false },
     { name: 'Steel Broadsword', cost: 1600, equippable: true },
+    { name: 'Abacus of Virtue', cost: 1800, equippable: true },
   ],
   FURTHER_SHOP_ITEMS: [
     { name: 'Divine Dagger', cost: 350, equippable: true },
     { name: 'Morning Star', cost: 700, equippable: true },
     { name: 'Iron Shield', cost: 1200, equippable: false },
     { name: 'Battle Axe', cost: 1500, equippable: true },
-    { name: 'Abacus of Virtue', cost: 1800, equippable: true },
     { name: 'Clothes H', cost: 180, equippable: true },
     { name: 'Leather Armor', cost: 650, equippable: true },
   ],
@@ -168,19 +168,38 @@ function rollOffer(rng) {
 
 const ABACUS_NAME_PATTERN = /abacus/i;
 
-function buildPurchaseCandidates(useFarShop) {
-  const candidates = CONSTANTS.CLOSER_SHOP_ITEMS.map((item) => ({
+const NEAR_SHOP_MIN_COST = Math.min(
+  ...CONSTANTS.CLOSER_SHOP_ITEMS.map((item) => item.cost)
+);
+
+function buildPurchaseCandidates(shopSelection = 'near') {
+  if (shopSelection === 'far') {
+    return CONSTANTS.FURTHER_SHOP_ITEMS.map((item) => ({
+      location: 'far',
+      item,
+    }));
+  }
+
+  return CONSTANTS.CLOSER_SHOP_ITEMS.map((item) => ({
     location: 'near',
     item,
   }));
+}
 
-  if (useFarShop) {
-    CONSTANTS.FURTHER_SHOP_ITEMS.forEach((item) =>
-      candidates.push({ location: 'far', item })
-    );
+function chooseShop({ availableGold, useFarShop }) {
+  if (!useFarShop) {
+    return 'near';
   }
 
-  return candidates;
+  if (availableGold >= NEAR_SHOP_MIN_COST) {
+    return 'near';
+  }
+
+  const hasAffordableFarItem = CONSTANTS.FURTHER_SHOP_ITEMS.some(
+    (item) => item.cost <= availableGold
+  );
+
+  return hasAffordableFarItem ? 'far' : 'near';
 }
 
 function createEmptyPlan() {
@@ -362,7 +381,8 @@ function planPurchases(planConfig) {
 
   const availableGold = Math.floor(gold);
   const capacity = CONSTANTS.INVENTORY_CAPACITY;
-  const candidates = buildPurchaseCandidates(useFarShop);
+  const selectedShop = chooseShop({ availableGold, useFarShop });
+  const candidates = buildPurchaseCandidates(selectedShop);
 
   if (availableGold <= 0 || capacity <= 0 || candidates.length === 0) {
     return createEmptyPlan();
