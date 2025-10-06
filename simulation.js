@@ -429,6 +429,7 @@ function runPhase2(rng, config) {
     purchaseStrategy,
     abacusCountThreshold,
     abacusPriceCutoff,
+    cycleObserver = null,
   } = config;
 
   let gold = Number(config.startGold) - CONSTANTS.SHOP_PURCHASE_COST;
@@ -443,6 +444,11 @@ function runPhase2(rng, config) {
   let netaInventory = [];
 
   while (gold < finalTarget || pendingProfits > 0 || netaInventory.length) {
+    const cycleStartGold = gold;
+    const cycleStartPending = pendingProfits;
+    const cycleStartInventory = netaInventory.length;
+    const cycleStartTime = timeSpent;
+
     if (pendingProfits > 0) {
       gold += pendingProfits;
       pendingProfits = 0;
@@ -455,6 +461,8 @@ function runPhase2(rng, config) {
     let tripsThisCycle = 0;
     let purchasedAny = false;
     let itemsAddedThisCycle = 0;
+
+    const nightSummaries = [];
 
     while (true) {
       const plan = planPurchases({
@@ -540,8 +548,14 @@ function runPhase2(rng, config) {
 
     timeSpent += nightsThisCycle * CONSTANTS.TIME_SLEEP_ONE_NIGHT;
 
+    const inventoryBeforeSleep = netaInventory.length;
+    let totalSoldThisCycle = 0;
+    let profitsThisCycle = 0;
+
     for (let night = 0; night < nightsThisCycle; night += 1) {
       const remainingInventory = [];
+      let soldThisNight = 0;
+      let profitThisNight = 0;
       for (const cost of netaInventory) {
         if (rng.random() < CONSTANTS.SALE_PROBABILITY_PER_NIGHT) {
           const multiplier = rng.uniform(
@@ -550,11 +564,44 @@ function runPhase2(rng, config) {
           );
           const saleValue = Math.round(cost * multiplier);
           pendingProfits += saleValue;
+          soldThisNight += 1;
+          profitThisNight += saleValue;
         } else {
           remainingInventory.push(cost);
         }
       }
       netaInventory = remainingInventory;
+      totalSoldThisCycle += soldThisNight;
+      profitsThisCycle += profitThisNight;
+      if (cycleObserver) {
+        nightSummaries.push({
+          night: night + 1,
+          soldCount: soldThisNight,
+          profitsGenerated: profitThisNight,
+          inventoryRemaining: netaInventory.length,
+        });
+      }
+    }
+
+    if (cycleObserver) {
+      cycleObserver({
+        cycleIndex: netaCycles,
+        startGold: cycleStartGold,
+        goldAfterPurchases: gold,
+        pendingProfitsAtStart: cycleStartPending,
+        pendingProfitsAfterSleep: pendingProfits,
+        itemsAddedThisCycle,
+        nightsScheduled: nightsToSleep,
+        nightsSlept: nightsThisCycle,
+        inventoryAtStart: cycleStartInventory,
+        inventoryBeforeSleep,
+        inventoryAfterSleep: netaInventory.length,
+        itemsSoldThisCycle: totalSoldThisCycle,
+        profitsGeneratedThisCycle: profitsThisCycle,
+        tripsThisCycle,
+        timeSpentThisCycle: timeSpent - cycleStartTime,
+        nightSummaries,
+      });
     }
   }
 
@@ -691,4 +738,61 @@ export function runSimulation(config) {
   }
 
   return { seed: baseSeed, summaries };
+}
+
+export function runSingleSimulation(config, options = {}) {
+  const thresholds = Array.from(config.armor_thresholds || []);
+  if (thresholds.length === 0) {
+    throw new Error('runSingleSimulation requires at least one armor threshold.');
+  }
+
+  const thresholdIndex =
+    typeof options.thresholdIndex === 'number' && options.thresholdIndex >= 0
+      ? Math.floor(options.thresholdIndex)
+      : 0;
+  if (thresholdIndex >= thresholds.length) {
+    throw new Error('thresholdIndex is out of range for provided thresholds.');
+  }
+
+  const threshold = thresholds[thresholdIndex];
+  const baseSeed = normalizeSeed(config.seed);
+  const runIndex =
+    typeof options.runIndex === 'number' && options.runIndex >= 0
+      ? Math.floor(options.runIndex)
+      : 0;
+  const seed = hashSeedComponents(baseSeed, threshold, runIndex);
+  const rng = createRng(seed);
+
+  const phase1Result = runPhase1(
+    rng,
+    threshold,
+    config.min_shop_gold,
+    config.start_gold
+  );
+
+  const cycleLogs = [];
+  const phase2Result = runPhase2(rng, {
+    startGold: phase1Result.gold,
+    nightsToSleep: config.nights_to_sleep,
+    finalTarget: config.final_target,
+    useFarShop: config.use_far_shop,
+    additionalTripCutoff: config.additional_trip_cutoff,
+    twoSleepItemThreshold: config.two_sleep_item_threshold,
+    oneSleepItemThreshold: config.one_sleep_item_threshold,
+    purchaseStrategy: config.purchase_strategy,
+    abacusCountThreshold: config.abacus_count_threshold,
+    abacusPriceCutoff: config.abacus_price_cutoff,
+    cycleObserver: options.captureCycles ? (cycle) => cycleLogs.push(cycle) : null,
+  });
+
+  return {
+    threshold,
+    baseSeed,
+    runIndex,
+    seed,
+    totalTime: phase1Result.timeSeconds + phase2Result.timeSeconds,
+    phase1: phase1Result,
+    phase2: phase2Result,
+    cycleLogs,
+  };
 }
