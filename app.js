@@ -109,7 +109,8 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
   const requiredValue = computeRequiredMinShopGold();
   const currentValue = Number.parseInt(minShopGoldInput.value, 10);
 
-  minShopGoldInput.title = `Taloon needs ${requiredValue.toLocaleString()} gold before buying the shop with the current shop selection.`;
+  minShopGoldInput.title =
+    `Taloon needs at least ${requiredValue.toLocaleString()} gold before buying the shop with the current shop selection.`;
 
   if (adjustValue && (Number.isNaN(currentValue) || currentValue !== requiredValue)) {
     minShopGoldInput.value = requiredValue;
@@ -117,9 +118,9 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
 
   if (Number.isNaN(currentValue)) {
     minShopGoldInput.setCustomValidity('Enter the required minimum gold before buying the shop.');
-  } else if (currentValue !== requiredValue) {
+  } else if (currentValue < requiredValue) {
     minShopGoldInput.setCustomValidity(
-      `Minimum gold must be exactly ${requiredValue.toLocaleString()} based on your shop selection.`
+      `Minimum gold must be at least ${requiredValue.toLocaleString()} based on your shop selection.`
     );
   } else {
     minShopGoldInput.setCustomValidity('');
