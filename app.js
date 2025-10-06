@@ -259,41 +259,40 @@ function renderSummaries(summaries) {
     return;
   }
 
-  const overallFastest = summaries.reduce((best, summary) => {
-    if (!best) {
-      return summary;
-    }
-    if (summary.fastest_time < best.fastest_time) {
-      return summary;
-    }
-    return best;
-  }, null);
+  const topAverageSummaries = [...summaries]
+    .sort((a, b) => a.average_time - b.average_time)
+    .slice(0, 3);
 
-  if (overallFastest) {
+  if (topAverageSummaries.length) {
     const highlight = document.createElement('div');
     highlight.className = 'results-overview';
 
     const heading = document.createElement('h3');
-    heading.textContent = 'Overall highlight';
+    heading.textContent = 'Top thresholds by average completion time';
     highlight.appendChild(heading);
 
-    const fastestRow = document.createElement('p');
-    const fastestLabel = document.createElement('strong');
-    fastestLabel.textContent = 'Fastest completion:';
-    fastestRow.appendChild(fastestLabel);
+    const list = document.createElement('ol');
+    list.className = 'results-ranking';
 
-    const fastestDetails = document.createElement('span');
-    fastestDetails.textContent = ` ${formatDuration(overallFastest.fastest_time)} (threshold ${overallFastest.threshold}). `;
-    fastestRow.appendChild(fastestDetails);
+    topAverageSummaries.forEach((summary) => {
+      const listItem = document.createElement('li');
 
-    const averageDetails = document.createElement('span');
-    averageDetails.textContent = `Average run: ${formatDuration(overallFastest.average_time)} (σ ${formatDuration(
-      overallFastest.std_dev_time
-    )}).`;
-    fastestRow.appendChild(averageDetails);
-    fastestRow.title =
-      'Fastest single run across all thresholds along with the average and standard deviation for that threshold.';
-    highlight.appendChild(fastestRow);
+      const thresholdLabel = document.createElement('strong');
+      thresholdLabel.textContent = `Threshold ${summary.threshold}`;
+      listItem.appendChild(thresholdLabel);
+
+      const stats = document.createElement('span');
+      stats.textContent = `Average ${formatDuration(summary.average_time)} (σ ${formatDuration(
+        summary.std_dev_time
+      )})`;
+      listItem.appendChild(stats);
+
+      listItem.title =
+        'Thresholds ranked by quickest average completion time, including their standard deviation across all runs.';
+      list.appendChild(listItem);
+    });
+
+    highlight.appendChild(list);
 
     resultsEl.appendChild(highlight);
   }
