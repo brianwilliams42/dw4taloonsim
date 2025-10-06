@@ -441,6 +441,8 @@ export function runSimulation(config) {
         count,
       }));
 
+    const fastestTime = Math.min(...times);
+
     summaries.push({
       threshold,
       average_time: mean(times),
@@ -450,6 +452,7 @@ export function runSimulation(config) {
       average_shop_trips: averageShopTrips,
       average_shop_trips_per_cycle: averageTripsPerCycle,
       bucket_counts: bucketCounts,
+      fastest_time: fastestTime,
     });
   }
 
