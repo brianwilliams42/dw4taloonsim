@@ -532,18 +532,16 @@ function runPhase2(rng, config) {
     timeSpent += CONSTANTS.TIME_RETURN_FOR_SLEEP;
     netaCycles += 1;
     let nightsThisCycle = nightsToSleep;
-    if (itemsAddedThisCycle > 0) {
-      if (
-        oneSleepItemThreshold != null &&
-        itemsAddedThisCycle <= oneSleepItemThreshold
-      ) {
-        nightsThisCycle = Math.min(nightsThisCycle, 1);
-      } else if (
-        twoSleepItemThreshold != null &&
-        itemsAddedThisCycle <= twoSleepItemThreshold
-      ) {
-        nightsThisCycle = Math.min(nightsThisCycle, 2);
-      }
+    if (
+      oneSleepItemThreshold != null &&
+      itemsAddedThisCycle <= oneSleepItemThreshold
+    ) {
+      nightsThisCycle = Math.min(nightsThisCycle, 1);
+    } else if (
+      twoSleepItemThreshold != null &&
+      itemsAddedThisCycle <= twoSleepItemThreshold
+    ) {
+      nightsThisCycle = Math.min(nightsThisCycle, 2);
     }
 
     timeSpent += nightsThisCycle * CONSTANTS.TIME_SLEEP_ONE_NIGHT;
