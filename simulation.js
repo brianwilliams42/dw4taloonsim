@@ -220,6 +220,8 @@ function runPhase2(rng, config) {
     finalTarget,
     useFarShop,
     additionalTripCutoff,
+    twoSleepItemThreshold,
+    oneSleepItemThreshold,
   } = config;
 
   let gold = Number(config.startGold) - CONSTANTS.SHOP_PURCHASE_COST;
@@ -245,6 +247,7 @@ function runPhase2(rng, config) {
 
     let tripsThisCycle = 0;
     let purchasedAny = false;
+    let itemsAddedThisCycle = 0;
 
     while (true) {
       const plan = planPurchases({ gold, useFarShop });
@@ -302,6 +305,7 @@ function runPhase2(rng, config) {
       for (const item of plan.farItems) {
         netaInventory.push(item.cost);
       }
+      itemsAddedThisCycle += plan.totalItems;
     }
 
     if (!purchasedAny && netaInventory.length === 0) {
@@ -309,9 +313,24 @@ function runPhase2(rng, config) {
     }
 
     timeSpent += CONSTANTS.TIME_RETURN_FOR_SLEEP;
-    timeSpent += nightsToSleep * CONSTANTS.TIME_SLEEP_ONE_NIGHT;
+    let nightsThisCycle = nightsToSleep;
+    if (itemsAddedThisCycle > 0) {
+      if (
+        oneSleepItemThreshold != null &&
+        itemsAddedThisCycle <= oneSleepItemThreshold
+      ) {
+        nightsThisCycle = Math.min(nightsThisCycle, 1);
+      } else if (
+        twoSleepItemThreshold != null &&
+        itemsAddedThisCycle <= twoSleepItemThreshold
+      ) {
+        nightsThisCycle = Math.min(nightsThisCycle, 2);
+      }
+    }
 
-    for (let night = 0; night < nightsToSleep; night += 1) {
+    timeSpent += nightsThisCycle * CONSTANTS.TIME_SLEEP_ONE_NIGHT;
+
+    for (let night = 0; night < nightsThisCycle; night += 1) {
       const remainingInventory = [];
       for (const cost of netaInventory) {
         if (rng.random() < CONSTANTS.SALE_PROBABILITY_PER_NIGHT) {
@@ -404,6 +423,8 @@ export function runSimulation(config) {
         finalTarget: config.final_target,
         useFarShop: config.use_far_shop,
         additionalTripCutoff: config.additional_trip_cutoff,
+        twoSleepItemThreshold: config.two_sleep_item_threshold,
+        oneSleepItemThreshold: config.one_sleep_item_threshold,
       });
 
       const totalTime = phase1Result.timeSeconds + phase2Result.timeSeconds;

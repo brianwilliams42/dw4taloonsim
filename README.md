@@ -10,6 +10,7 @@ the Endor armor merchant and the subsequent shop phase with Neta.
 - Support for multiple armor offer acceptance thresholds in a single run.
 - Phase two modelling of purchase trips, sleeping nights, and probabilistic sales.
 - Optional use of the further shop and an additional trip cutoff before sleeping.
+- Sleep-night overrides that shorten rest when few items were delivered.
 - Aggregated statistics and histogram buckets for each threshold.
 
 ## Usage
@@ -34,8 +35,8 @@ node cli.js --runs 500 --thresholds 1600,1700,1800 --use-far-shop
 ```
 
 Use `--help` to see the full list of options, including overrides for starting
-gold, target gold, sleep nights, the optional additional trip cutoff, RNG seed,
-and histogram bucket sizing.
+gold, target gold, sleep nights, optional reduced-sleep thresholds, the
+additional trip cutoff, RNG seed, and histogram bucket sizing.
 
 You can also install the executable locally:
 

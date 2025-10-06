@@ -78,6 +78,10 @@ function applyDefaults() {
   document.getElementById('final-target').value = defaults.final_target;
   document.getElementById('thresholds').value = defaults.armor_thresholds.join(', ');
   document.getElementById('nights').value = defaults.nights_to_sleep;
+  document.getElementById('two-sleep-threshold').value =
+    defaults.two_sleep_item_threshold ?? '';
+  document.getElementById('one-sleep-threshold').value =
+    defaults.one_sleep_item_threshold ?? '';
   document.getElementById('runs').value = defaults.runs;
   document.getElementById('trip-cutoff').value = defaults.additional_trip_cutoff ?? '';
   document.getElementById('seed').value = defaults.seed ?? '';
@@ -366,6 +370,12 @@ form.addEventListener('submit', async (event) => {
       final_target: Number.parseInt(document.getElementById('final-target').value, 10),
       armor_thresholds: parseThresholds(document.getElementById('thresholds').value),
       nights_to_sleep: Number.parseInt(document.getElementById('nights').value, 10),
+      two_sleep_item_threshold: parseOptionalNumber(
+        document.getElementById('two-sleep-threshold').value
+      ),
+      one_sleep_item_threshold: parseOptionalNumber(
+        document.getElementById('one-sleep-threshold').value
+      ),
       runs: Number.parseInt(document.getElementById('runs').value, 10),
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
       seed: resolvedSeed,

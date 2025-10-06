@@ -42,6 +42,32 @@
               <span>Nights to sleep between profit collections</span>
               <input id="nights" name="nights" type="number" min="1" required />
             </label>
+            <label
+              class="field"
+              title="If Taloon delivers at most this many items in a loop, he only sleeps twice before returning. Leave blank to always use the default nights."
+            >
+              <span>Two-sleep item threshold (optional)</span>
+              <input
+                id="two-sleep-threshold"
+                name="two-sleep-threshold"
+                type="number"
+                min="0"
+                placeholder="Leave blank for none"
+              />
+            </label>
+            <label
+              class="field"
+              title="If Taloon delivers at most this many items in a loop, he only sleeps once before returning. Leave blank to always use the default nights."
+            >
+              <span>One-sleep item threshold (optional)</span>
+              <input
+                id="one-sleep-threshold"
+                name="one-sleep-threshold"
+                type="number"
+                min="0"
+                placeholder="Leave blank for none"
+              />
+            </label>
             <label class="field" title="How many Monte Carlo runs to perform for each threshold value.">
               <span>Monte Carlo runs per threshold</span>
               <input id="runs" name="runs" type="number" min="1" required />

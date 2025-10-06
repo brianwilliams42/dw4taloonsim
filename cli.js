@@ -16,6 +16,8 @@ function printHelp() {
     `  --thresholds <list>          Comma-separated armor thresholds between ${constraints.min_threshold} and ${constraints.max_threshold}.\n` +
     `  --runs <int>                 Number of Monte Carlo simulations per threshold (default ${CONSTANTS.DEFAULT_SIMULATION_RUNS}).\n` +
     `  --nights <int>               Nights Taloon sleeps before collecting shop profits (default ${CONSTANTS.DEFAULT_SLEEP_NIGHTS}).\n` +
+    `  --two-sleep-threshold <int>  Sleep twice instead of the default nights when giving Neta this many items or fewer.\n` +
+    `  --one-sleep-threshold <int>  Sleep once instead of the default nights when giving Neta this many items or fewer.\n` +
     `  --use-far-shop               Allow purchases from the further shop.\n` +
     `  --additional-trip-cutoff <int>  Minimum gold remaining to take an extra purchase trip before sleeping.\n` +
     `  --seed <int>                 Seed for deterministic simulations.\n` +
@@ -68,6 +70,8 @@ function parseArgs(argv) {
     armor_thresholds: [...config.defaults.armor_thresholds],
     runs: config.defaults.runs,
     nights_to_sleep: config.defaults.nights_to_sleep,
+    two_sleep_item_threshold: config.defaults.two_sleep_item_threshold,
+    one_sleep_item_threshold: config.defaults.one_sleep_item_threshold,
     use_far_shop: config.defaults.use_far_shop,
     additional_trip_cutoff: config.defaults.additional_trip_cutoff,
     seed: config.defaults.seed,
@@ -95,6 +99,20 @@ function parseArgs(argv) {
         break;
       case '--nights':
         options.nights_to_sleep = parseInteger('nights', args.shift(), { min: 1 });
+        break;
+      case '--two-sleep-threshold':
+        options.two_sleep_item_threshold = parseInteger(
+          'two-sleep threshold',
+          args.shift(),
+          { allowNull: true, min: 0 }
+        );
+        break;
+      case '--one-sleep-threshold':
+        options.one_sleep_item_threshold = parseInteger(
+          'one-sleep threshold',
+          args.shift(),
+          { allowNull: true, min: 0 }
+        );
         break;
       case '--use-far-shop':
         options.use_far_shop = true;
