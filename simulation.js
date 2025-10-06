@@ -213,11 +213,6 @@ function planGreedyPurchase({
             typeof abacusConfig.cutoff === 'number' && abacusConfig.cutoff > 0
               ? abacusConfig.cutoff
               : null,
-          initialPurchases:
-            typeof abacusConfig.initialPurchases === 'number' &&
-            abacusConfig.initialPurchases > 0
-              ? Math.floor(abacusConfig.initialPurchases)
-              : 0,
         }
       : null;
   let abaciInPlan = 0;
@@ -231,7 +226,7 @@ function planGreedyPurchase({
       normalizedAbacus &&
       normalizedAbacus.threshold != null &&
       normalizedAbacus.cutoff != null &&
-      normalizedAbacus.initialPurchases + abaciInPlan >= normalizedAbacus.threshold
+      abaciInPlan >= normalizedAbacus.threshold
         ? normalizedAbacus.cutoff
         : null;
 
@@ -357,7 +352,6 @@ function planPurchases(planConfig) {
     purchaseStrategy = DEFAULT_PURCHASE_STRATEGY,
     abacusCountThreshold,
     abacusPriceCutoff,
-    abacusPurchaseCount = 0,
   } = planConfig;
 
   const availableGold = Math.floor(gold);
@@ -383,16 +377,10 @@ function planPurchases(planConfig) {
       typeof abacusPriceCutoff === 'number' && abacusPriceCutoff > 0
         ? abacusPriceCutoff
         : null;
-    const normalizedPurchases =
-      typeof abacusPurchaseCount === 'number' && abacusPurchaseCount > 0
-        ? Math.floor(abacusPurchaseCount)
-        : 0;
-
     if (normalizedCount != null && normalizedCutoff != null) {
       abacusConfig = {
         threshold: normalizedCount,
         cutoff: normalizedCutoff,
-        initialPurchases: normalizedPurchases,
       };
     }
   }
@@ -428,7 +416,6 @@ function runPhase2(rng, config) {
   let totalTrips = 0;
   let pendingProfits = 0;
   let netaInventory = [];
-  let totalAbacusPurchased = 0;
 
   while (gold < finalTarget || pendingProfits > 0 || netaInventory.length) {
     if (pendingProfits > 0) {
@@ -451,7 +438,6 @@ function runPhase2(rng, config) {
         purchaseStrategy,
         abacusCountThreshold,
         abacusPriceCutoff,
-        abacusPurchaseCount: totalAbacusPurchased,
       });
       if (plan.totalItems === 0) {
         break;
@@ -502,14 +488,6 @@ function runPhase2(rng, config) {
       }
       for (const item of plan.farItems) {
         netaInventory.push(item.cost);
-      }
-      const abacusPurchasesThisPlan = [...plan.nearItems, ...plan.farItems].reduce(
-        (count, item) =>
-          ABACUS_NAME_PATTERN.test(item.name) ? count + 1 : count,
-        0
-      );
-      if (abacusPurchasesThisPlan > 0) {
-        totalAbacusPurchased += abacusPurchasesThisPlan;
       }
       itemsAddedThisCycle += plan.totalItems;
     }
