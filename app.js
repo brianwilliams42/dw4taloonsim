@@ -14,7 +14,7 @@ const STATIC_CONFIG = {
     start_gold: 30000,
     min_shop_gold: 35575,
     final_target: 26000,
-    armor_thresholds: [1523, 1600, 1700, 1800],
+    armor_thresholds: [1570, 1593, 1617, 1640, 1664, 1687, 1710, 1734, 1757, 1781],
     nights_to_sleep: 3,
     runs: 1000,
     additional_trip_cutoff: null,
