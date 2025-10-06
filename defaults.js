@@ -7,6 +7,8 @@ export const DEFAULT_FORM_CONFIG = {
     final_target: CONSTANTS.DEFAULT_FINAL_TARGET,
     armor_thresholds: [...CONSTANTS.DEFAULT_ARMOR_THRESHOLDS],
     nights_to_sleep: CONSTANTS.DEFAULT_SLEEP_NIGHTS,
+    two_sleep_item_threshold: null,
+    one_sleep_item_threshold: null,
     runs: CONSTANTS.DEFAULT_SIMULATION_RUNS,
     additional_trip_cutoff: null,
     seed: null,
