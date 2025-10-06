@@ -230,7 +230,7 @@ function planGreedyPurchase({
         ? normalizedAbacus.cutoff
         : null;
 
-    if (priceCutoff != null && candidate.item.cost < priceCutoff) {
+    if (priceCutoff != null && candidate.item.cost <= priceCutoff) {
       continue;
     }
 
