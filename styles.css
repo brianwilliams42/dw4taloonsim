@@ -10,6 +10,9 @@
   --muted: rgba(0, 0, 0, 0.6);
   --muted-light: rgba(0, 0, 0, 0.05);
   --danger: #b3261e;
+  --results-text: #0f1f3d;
+  --results-emphasis: #0c2f68;
+  --results-muted: #2d4069;
 }
 
 body {
@@ -26,6 +29,9 @@ body.dark {
   --panel-border: rgba(255, 255, 255, 0.15);
   --muted: rgba(255, 255, 255, 0.7);
   --muted-light: rgba(255, 255, 255, 0.1);
+  --results-text: #e3edff;
+  --results-emphasis: #9bc1ff;
+  --results-muted: #c5d8ff;
   color: #f5f5f5;
 }
 
@@ -184,10 +190,16 @@ button.secondary {
   background: rgba(255, 255, 255, 0.85);
   display: grid;
   gap: 0.75rem;
+  color: var(--results-text);
 }
 
 body.dark .summary-card {
   background: rgba(20, 26, 40, 0.9);
+}
+
+.summary-card h3 {
+  margin: 0;
+  color: var(--results-emphasis);
 }
 
 .summary-grid {
@@ -200,6 +212,10 @@ body.dark .summary-card {
   justify-content: space-between;
 }
 
+.summary-grid strong {
+  color: var(--results-muted);
+}
+
 .histogram {
   display: grid;
   gap: 0.4rem;
@@ -207,41 +223,54 @@ body.dark .summary-card {
 }
 
 .histogram-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) 3.5rem;
   align-items: center;
   gap: 0.75rem;
 }
 
 .histogram-row .label {
-  width: 6rem;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--results-muted);
 }
 
-.histogram-row .bar {
-  flex: 1;
+.histogram-row .bar-track {
   height: 1rem;
   border-radius: 8px;
-  background: linear-gradient(90deg, rgba(47, 123, 255, 0.8), rgba(15, 209, 178, 0.9));
+  background: var(--muted-light);
   position: relative;
+  overflow: hidden;
 }
 
-.histogram-row .bar.empty {
-  min-width: 0.5rem;
+.histogram-row .bar-track.empty {
   background: repeating-linear-gradient(
       135deg,
-      rgba(47, 123, 255, 0.35),
-      rgba(47, 123, 255, 0.35) 6px,
+      rgba(47, 123, 255, 0.25),
+      rgba(47, 123, 255, 0.25) 6px,
       rgba(255, 255, 255, 0.3) 6px,
       rgba(255, 255, 255, 0.3) 12px
     );
-  border: 1px dashed rgba(47, 123, 255, 0.6);
+  border: 1px dashed rgba(47, 123, 255, 0.4);
+}
+
+.histogram-row .bar-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(47, 123, 255, 0.9), rgba(15, 209, 178, 0.95));
+  transition: width 0.2s ease-out;
+}
+
+.histogram-row .bar-fill.empty {
+  background: transparent;
 }
 
 .histogram-row .value {
   min-width: 3rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  color: var(--results-text);
 }
 
 .hint {
