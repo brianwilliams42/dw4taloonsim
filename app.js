@@ -13,6 +13,9 @@ const resetButton = document.getElementById('reset-btn');
 const thresholdHint = document.getElementById('threshold-hint');
 const minShopGoldInput = document.getElementById('min-shop-gold');
 const useFarShopInput = document.getElementById('use-far-shop');
+const purchaseStrategyInput = document.getElementById('purchase-strategy');
+const abacusCountInput = document.getElementById('abacus-count-threshold');
+const abacusPriceInput = document.getElementById('abacus-price-cutoff');
 
 const REQUIRED_SHOP_PURCHASE_GOLD = 35000;
 const REQUIRED_WING_COST = 25;
@@ -86,6 +89,9 @@ function applyDefaults() {
   document.getElementById('trip-cutoff').value = defaults.additional_trip_cutoff ?? '';
   document.getElementById('seed').value = defaults.seed ?? '';
   useFarShopInput.checked = Boolean(defaults.use_far_shop);
+  purchaseStrategyInput.value = defaults.purchase_strategy;
+  abacusCountInput.value = defaults.abacus_count_threshold ?? '';
+  abacusPriceInput.value = defaults.abacus_price_cutoff ?? '';
   if (constraints) {
     thresholdHint.textContent =
       `Valid armor thresholds: ${constraints.min_threshold} – ${constraints.max_threshold} (inclusive). ` +
@@ -96,6 +102,7 @@ function applyDefaults() {
   clearStatus();
   resultsEl.innerHTML = '';
   enforceMinShopGoldRequirement({ adjustValue: true });
+  updateAbacusFieldRequirements();
 }
 
 function computeRequiredMinShopGold() {
@@ -177,8 +184,8 @@ function parseOptionalNumber(value) {
 
 function disableForm(disabled) {
   runButton.disabled = disabled;
-  form.querySelectorAll('input').forEach((input) => {
-    input.disabled = disabled;
+  form.querySelectorAll('input, select').forEach((control) => {
+    control.disabled = disabled;
   });
   resetButton.disabled = disabled;
 }
@@ -236,6 +243,20 @@ minShopGoldInput.addEventListener('change', () => {
 useFarShopInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement({ adjustValue: true });
   minShopGoldInput.reportValidity();
+});
+
+function updateAbacusFieldRequirements() {
+  const isAbacusStrategy = purchaseStrategyInput.value === 'abacus-greedy';
+  abacusCountInput.required = isAbacusStrategy;
+  abacusPriceInput.required = isAbacusStrategy;
+  if (!isAbacusStrategy) {
+    abacusCountInput.setCustomValidity('');
+    abacusPriceInput.setCustomValidity('');
+  }
+}
+
+purchaseStrategyInput.addEventListener('change', () => {
+  updateAbacusFieldRequirements();
 });
 
 function createMetricRow(label, valueText, titleText) {
@@ -363,6 +384,15 @@ form.addEventListener('submit', async (event) => {
   try {
     const manualSeed = parseOptionalNumber(document.getElementById('seed').value);
     const resolvedSeed = manualSeed ?? generateRandomSeed();
+    const selectedStrategy = purchaseStrategyInput.value;
+    const abacusCount =
+      selectedStrategy === 'abacus-greedy'
+        ? parseOptionalNumber(abacusCountInput.value)
+        : null;
+    const abacusPrice =
+      selectedStrategy === 'abacus-greedy'
+        ? parseOptionalNumber(abacusPriceInput.value)
+        : null;
 
     const payload = {
       start_gold: Number.parseInt(document.getElementById('start-gold').value, 10),
@@ -380,6 +410,9 @@ form.addEventListener('submit', async (event) => {
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
       seed: resolvedSeed,
       use_far_shop: useFarShopInput.checked,
+      purchase_strategy: selectedStrategy,
+      abacus_count_threshold: abacusCount,
+      abacus_price_cutoff: abacusPrice,
       time_bucket_seconds: bucketSeconds,
     };
 

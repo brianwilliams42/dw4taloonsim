@@ -88,6 +88,40 @@
               <input id="use-far-shop" name="use-far-shop" type="checkbox" />
               <span>Allow buying from the further shop</span>
             </label>
+            <label class="field" title="Choose how Taloon plans his shopping trips when stocking Neta.">
+              <span>Purchase strategy</span>
+              <select id="purchase-strategy" name="purchase-strategy">
+                <option value="greedy">Greedy (buy priciest items first)</option>
+                <option value="max-spend">Maximize total spend</option>
+                <option value="abacus-greedy">Abacus-aware greedy</option>
+              </select>
+            </label>
+            <label
+              class="field"
+              title="When using the abacus-aware strategy, require at least this many Abacus of Virtue purchases before skipping cheaper items."
+            >
+              <span>Abacus count threshold (abacus strategy)</span>
+              <input
+                id="abacus-count-threshold"
+                name="abacus-count-threshold"
+                type="number"
+                min="0"
+                placeholder="Enter count when using abacus strategy"
+              />
+            </label>
+            <label
+              class="field"
+              title="When using the abacus-aware strategy, ignore shop items cheaper than this gold amount once the abacus count condition is met."
+            >
+              <span>Abacus price cutoff (abacus strategy)</span>
+              <input
+                id="abacus-price-cutoff"
+                name="abacus-price-cutoff"
+                type="number"
+                min="0"
+                placeholder="Enter gold cutoff when using abacus strategy"
+              />
+            </label>
           </fieldset>
         </form>
         <p id="threshold-hint" class="hint"></p>

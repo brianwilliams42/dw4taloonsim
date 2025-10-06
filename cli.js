@@ -4,6 +4,8 @@ import {
   DEFAULT_TIME_BUCKET_SECONDS,
   CONSTANTS,
   formatDuration,
+  PURCHASE_STRATEGIES,
+  DEFAULT_PURCHASE_STRATEGY,
 } from './simulation.js';
 import { getDefaultConfig } from './defaults.js';
 
@@ -21,9 +23,14 @@ function printHelp() {
     `  --use-far-shop               Allow purchases from the further shop.\n` +
     `  --additional-trip-cutoff <int>  Minimum gold remaining to take an extra purchase trip before sleeping.\n` +
     `  --seed <int>                 Seed for deterministic simulations.\n` +
+    `  --purchase-strategy <name>  Purchase planning algorithm (greedy, max-spend, abacus-greedy).\n` +
+    `  --abacus-count-threshold <int>  Minimum Abacus of Virtue purchases before skipping cheaper items (abacus strategy).\n` +
+    `  --abacus-price-cutoff <int>  Gold cutoff for cheaper items once the abacus condition is met (abacus strategy).\n` +
     `  --time-bucket-seconds <int>  Override histogram bucket size in seconds (default ${DEFAULT_TIME_BUCKET_SECONDS}).\n` +
     `  -h, --help                   Show this help message.\n`);
 }
+
+const VALID_PURCHASE_STRATEGIES = new Set(Object.values(PURCHASE_STRATEGIES));
 
 function parseInteger(name, value, { allowNull = false, min = -Infinity } = {}) {
   if (value == null) {
@@ -63,6 +70,7 @@ function parseThresholds(raw, constraints) {
 
 function parseArgs(argv) {
   const config = getDefaultConfig();
+  const defaultStrategy = config.defaults.purchase_strategy ?? DEFAULT_PURCHASE_STRATEGY;
   const options = {
     start_gold: config.defaults.start_gold,
     min_shop_gold: config.defaults.min_shop_gold,
@@ -76,6 +84,9 @@ function parseArgs(argv) {
     additional_trip_cutoff: config.defaults.additional_trip_cutoff,
     seed: config.defaults.seed,
     time_bucket_seconds: config.constraints.time_bucket_seconds,
+    purchase_strategy: defaultStrategy,
+    abacus_count_threshold: config.defaults.abacus_count_threshold,
+    abacus_price_cutoff: config.defaults.abacus_price_cutoff,
   };
 
   const args = [...argv];
@@ -126,6 +137,28 @@ function parseArgs(argv) {
       case '--seed':
         options.seed = parseInteger('seed', args.shift(), { allowNull: true });
         break;
+      case '--purchase-strategy': {
+        const value = args.shift();
+        if (!value || !VALID_PURCHASE_STRATEGIES.has(value)) {
+          throw new Error(
+            `Purchase strategy must be one of: ${Array.from(VALID_PURCHASE_STRATEGIES).join(', ')}.`
+          );
+        }
+        options.purchase_strategy = value;
+        break;
+      }
+      case '--abacus-count-threshold':
+        options.abacus_count_threshold = parseInteger('abacus count threshold', args.shift(), {
+          allowNull: true,
+          min: 0,
+        });
+        break;
+      case '--abacus-price-cutoff':
+        options.abacus_price_cutoff = parseInteger('abacus price cutoff', args.shift(), {
+          allowNull: true,
+          min: 0,
+        });
+        break;
       case '--time-bucket-seconds':
         options.time_bucket_seconds = parseInteger('time bucket seconds', args.shift(), { min: 1 });
         break;
@@ -145,6 +178,15 @@ function parseArgs(argv) {
 
   if (options.additional_trip_cutoff != null && options.additional_trip_cutoff < 0) {
     throw new Error('Additional trip cutoff must be non-negative.');
+  }
+
+  if (
+    options.purchase_strategy === PURCHASE_STRATEGIES.ABACUS_GREEDY &&
+    (options.abacus_count_threshold == null || options.abacus_price_cutoff == null)
+  ) {
+    throw new Error(
+      'Abacus-aware strategy requires both --abacus-count-threshold and --abacus-price-cutoff values.'
+    );
   }
 
   return options;

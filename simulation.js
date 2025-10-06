@@ -103,10 +103,19 @@ export const CONSTANTS = Object.freeze({
     { name: 'Morning Star', cost: 700, equippable: true },
     { name: 'Iron Shield', cost: 1200, equippable: false },
     { name: 'Battle Axe', cost: 1500, equippable: true },
+    { name: 'Abacus of Virtue', cost: 1800, equippable: true },
     { name: 'Clothes H', cost: 180, equippable: true },
     { name: 'Leather Armor', cost: 650, equippable: true },
   ],
 });
+
+export const PURCHASE_STRATEGIES = Object.freeze({
+  GREEDY: 'greedy',
+  MAX_SPEND: 'max-spend',
+  ABACUS_GREEDY: 'abacus-greedy',
+});
+
+export const DEFAULT_PURCHASE_STRATEGY = PURCHASE_STRATEGIES.GREEDY;
 
 function runPhase1(rng, priceThreshold, minShopGold, startGold) {
   let gold = Number(startGold);
@@ -157,16 +166,9 @@ function rollOffer(rng) {
   return [rng.choice(CONSTANTS.ARMOR_BUY_PRICES), false];
 }
 
-function planPurchases(rngConfig) {
-  const {
-    gold,
-    useFarShop,
-  } = rngConfig;
-  const nearItems = [];
-  const farItems = [];
-  let capacityRemaining = CONSTANTS.INVENTORY_CAPACITY;
-  let availableGold = Math.floor(gold);
+const ABACUS_NAME_PATTERN = /abacus/i;
 
+function buildPurchaseCandidates(useFarShop) {
   const candidates = CONSTANTS.CLOSER_SHOP_ITEMS.map((item) => ({
     location: 'near',
     item,
@@ -178,40 +180,194 @@ function planPurchases(rngConfig) {
     );
   }
 
-  candidates.sort((a, b) => b.item.cost - a.item.cost);
+  return candidates;
+}
 
-  for (const candidate of candidates) {
-    if (capacityRemaining === 0) {
+function createEmptyPlan() {
+  return {
+    nearItems: [],
+    farItems: [],
+    totalCost: 0,
+    totalItems: 0,
+    visitsFarShop: false,
+  };
+}
+
+function planGreedyPurchase({ candidates, availableGold, capacity, priceCutoff }) {
+  const plan = createEmptyPlan();
+  const sortedCandidates = [...candidates].sort((a, b) => b.item.cost - a.item.cost);
+
+  for (const candidate of sortedCandidates) {
+    if (plan.totalItems >= capacity) {
       break;
     }
-    const { item, location } = candidate;
+
+    if (priceCutoff != null && candidate.item.cost < priceCutoff) {
+      continue;
+    }
+
     const maxCopies = Math.min(
-      Math.floor(availableGold / item.cost),
-      capacityRemaining
+      Math.floor(availableGold / candidate.item.cost),
+      capacity - plan.totalItems
     );
-    for (let i = 0; i < maxCopies; i += 1) {
-      if (location === 'near') {
-        nearItems.push(item);
-      } else {
-        farItems.push(item);
-      }
-      availableGold -= item.cost;
-      capacityRemaining -= 1;
-      if (capacityRemaining === 0) {
-        break;
+
+    if (maxCopies <= 0) {
+      continue;
+    }
+
+    const targetList = candidate.location === 'near' ? plan.nearItems : plan.farItems;
+    for (let index = 0; index < maxCopies; index += 1) {
+      targetList.push(candidate.item);
+      plan.totalCost += candidate.item.cost;
+      plan.totalItems += 1;
+      availableGold -= candidate.item.cost;
+    }
+  }
+
+  plan.visitsFarShop = plan.farItems.length > 0;
+  return plan;
+}
+
+function planMaxSpendPurchase({ candidates, availableGold, capacity }) {
+  if (capacity <= 0 || availableGold <= 0 || candidates.length === 0) {
+    return createEmptyPlan();
+  }
+
+  const sortedCandidates = [...candidates].sort((a, b) => b.item.cost - a.item.cost);
+  const selection = new Array(sortedCandidates.length).fill(0);
+  const bestSelection = {
+    totalCost: 0,
+    totalItems: 0,
+    counts: new Array(sortedCandidates.length).fill(0),
+  };
+
+  const cheapestCost = sortedCandidates.reduce(
+    (min, candidate) => Math.min(min, candidate.item.cost),
+    Number.POSITIVE_INFINITY
+  );
+
+  function updateBest(currentCost) {
+    if (currentCost > bestSelection.totalCost) {
+      bestSelection.totalCost = currentCost;
+      bestSelection.totalItems = selection.reduce((sum, count) => sum + count, 0);
+      bestSelection.counts = selection.slice();
+      return;
+    }
+
+    if (currentCost === bestSelection.totalCost) {
+      const totalItems = selection.reduce((sum, count) => sum + count, 0);
+      if (totalItems > bestSelection.totalItems) {
+        bestSelection.totalItems = totalItems;
+        bestSelection.counts = selection.slice();
       }
     }
   }
 
-  return {
-    nearItems,
-    farItems,
-    totalCost:
-      nearItems.reduce((sum, item) => sum + item.cost, 0) +
-      farItems.reduce((sum, item) => sum + item.cost, 0),
-    totalItems: nearItems.length + farItems.length,
-    visitsFarShop: farItems.length > 0,
-  };
+  function dfs(index, remainingCapacity, remainingGold, currentCost) {
+    if (index >= sortedCandidates.length || remainingCapacity === 0) {
+      updateBest(currentCost);
+      return;
+    }
+
+    if (remainingGold < cheapestCost) {
+      updateBest(currentCost);
+      return;
+    }
+
+    const candidate = sortedCandidates[index];
+    const maxCopies = Math.min(
+      Math.floor(remainingGold / candidate.item.cost),
+      remainingCapacity
+    );
+
+    for (let copies = maxCopies; copies >= 0; copies -= 1) {
+      selection[index] = copies;
+      dfs(
+        index + 1,
+        remainingCapacity - copies,
+        remainingGold - copies * candidate.item.cost,
+        currentCost + copies * candidate.item.cost
+      );
+    }
+
+    selection[index] = 0;
+  }
+
+  dfs(0, capacity, availableGold, 0);
+
+  const plan = createEmptyPlan();
+  plan.totalCost = bestSelection.totalCost;
+  plan.totalItems = bestSelection.totalItems;
+
+  bestSelection.counts.forEach((count, index) => {
+    if (count <= 0) {
+      return;
+    }
+    const candidate = sortedCandidates[index];
+    const targetList = candidate.location === 'near' ? plan.nearItems : plan.farItems;
+    for (let copy = 0; copy < count; copy += 1) {
+      targetList.push(candidate.item);
+    }
+  });
+
+  plan.visitsFarShop = plan.farItems.length > 0;
+  return plan;
+}
+
+function planPurchases(planConfig) {
+  const {
+    gold,
+    useFarShop,
+    purchaseStrategy = DEFAULT_PURCHASE_STRATEGY,
+    abacusCountThreshold,
+    abacusPriceCutoff,
+  } = planConfig;
+
+  const availableGold = Math.floor(gold);
+  const capacity = CONSTANTS.INVENTORY_CAPACITY;
+  const candidates = buildPurchaseCandidates(useFarShop);
+
+  if (availableGold <= 0 || capacity <= 0 || candidates.length === 0) {
+    return createEmptyPlan();
+  }
+
+  if (purchaseStrategy === PURCHASE_STRATEGIES.MAX_SPEND) {
+    return planMaxSpendPurchase({ candidates, availableGold, capacity });
+  }
+
+  let priceCutoff = null;
+
+  if (purchaseStrategy === PURCHASE_STRATEGIES.ABACUS_GREEDY) {
+    const normalizedCount =
+      typeof abacusCountThreshold === 'number' && abacusCountThreshold > 0
+        ? abacusCountThreshold
+        : null;
+    const normalizedCutoff =
+      typeof abacusPriceCutoff === 'number' && abacusPriceCutoff > 0
+        ? abacusPriceCutoff
+        : null;
+
+    if (normalizedCount != null && normalizedCutoff != null) {
+      const abacusCandidate = candidates.find((candidate) =>
+        ABACUS_NAME_PATTERN.test(candidate.item.name)
+      );
+
+      if (abacusCandidate) {
+        const maxAffordable = Math.floor(availableGold / abacusCandidate.item.cost);
+        const maxDeliverable = Math.min(maxAffordable, capacity);
+        if (maxDeliverable >= normalizedCount) {
+          priceCutoff = normalizedCutoff;
+        }
+      }
+    }
+  }
+
+  return planGreedyPurchase({
+    candidates,
+    availableGold,
+    capacity,
+    priceCutoff,
+  });
 }
 
 function runPhase2(rng, config) {
@@ -222,6 +378,9 @@ function runPhase2(rng, config) {
     additionalTripCutoff,
     twoSleepItemThreshold,
     oneSleepItemThreshold,
+    purchaseStrategy,
+    abacusCountThreshold,
+    abacusPriceCutoff,
   } = config;
 
   let gold = Number(config.startGold) - CONSTANTS.SHOP_PURCHASE_COST;
@@ -250,7 +409,13 @@ function runPhase2(rng, config) {
     let itemsAddedThisCycle = 0;
 
     while (true) {
-      const plan = planPurchases({ gold, useFarShop });
+      const plan = planPurchases({
+        gold,
+        useFarShop,
+        purchaseStrategy,
+        abacusCountThreshold,
+        abacusPriceCutoff,
+      });
       if (plan.totalItems === 0) {
         break;
       }
@@ -422,6 +587,9 @@ export function runSimulation(config) {
         additionalTripCutoff: config.additional_trip_cutoff,
         twoSleepItemThreshold: config.two_sleep_item_threshold,
         oneSleepItemThreshold: config.one_sleep_item_threshold,
+        purchaseStrategy: config.purchase_strategy,
+        abacusCountThreshold: config.abacus_count_threshold,
+        abacusPriceCutoff: config.abacus_price_cutoff,
       });
 
       const totalTime = phase1Result.timeSeconds + phase2Result.timeSeconds;
