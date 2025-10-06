@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional, Sequence
 from . import constants as const
 from .simulation import SimulationConfig, TaloonSimulation
 
-WEB_DIR = Path(__file__).resolve().parent / "web"
+WEB_DIR = Path(__file__).resolve().parent.parent
 
 
 class TaloonRequestHandler(SimpleHTTPRequestHandler):

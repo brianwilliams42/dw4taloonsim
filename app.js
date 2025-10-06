@@ -10,7 +10,7 @@ let constraints = null;
 let bucketSeconds = 15;
 
 async function fetchDefaults() {
-  const response = await fetch('/config');
+  const response = await fetch('config');
   if (!response.ok) {
     throw new Error('Unable to load defaults from the server.');
   }
@@ -207,7 +207,7 @@ form.addEventListener('submit', async (event) => {
       use_far_shop: document.getElementById('use-far-shop').checked,
     };
 
-    const response = await fetch('/simulate', {
+    const response = await fetch('simulate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
