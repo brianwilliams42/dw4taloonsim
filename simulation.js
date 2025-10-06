@@ -92,12 +92,11 @@ export const CONSTANTS = Object.freeze({
     1570, 1593, 1617, 1640, 1664, 1687, 1710, 1734, 1757, 1781,
   ],
   CLOSER_SHOP_ITEMS: [
-    { name: 'Iron Apron', cost: 550, equippable: true },
-    { name: 'Iron Spear', cost: 750, equippable: true },
-    { name: 'Half Plate', cost: 880, equippable: true },
-    { name: 'Full Plate', cost: 1250, equippable: false },
-    { name: 'Steel Broadsword', cost: 1600, equippable: true },
-    { name: 'Abacus of Virtue', cost: 1800, equippable: true },
+    { name: 'Chain Sickle', cost: 550, equippable: true },
+    { name: 'Venomous Dagger', cost: 750, equippable: true },
+    { name: 'Iron Spear', cost: 880, equippable: true },
+    { name: 'Morning Star', cost: 1250, equippable: true },
+    { name: 'Abacus of Virtue', cost: 1600, equippable: true },
   ],
   FURTHER_SHOP_ITEMS: [
     { name: 'Divine Dagger', cost: 350, equippable: true },
