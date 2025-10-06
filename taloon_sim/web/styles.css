@@ -1,0 +1,255 @@
+:root {
+  color-scheme: light dark;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  font-size: 16px;
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --panel-border: rgba(0, 0, 0, 0.15);
+  --accent: #2f7bff;
+  --accent-contrast: #ffffff;
+  --muted: rgba(0, 0, 0, 0.6);
+  --muted-light: rgba(0, 0, 0, 0.05);
+  --danger: #b3261e;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #071736, #193a76 40%, #0b7bc5);
+  color: #101010;
+  display: flex;
+  justify-content: center;
+}
+
+body.dark {
+  --panel-bg: rgba(16, 22, 33, 0.9);
+  --panel-border: rgba(255, 255, 255, 0.15);
+  --muted: rgba(255, 255, 255, 0.7);
+  --muted-light: rgba(255, 255, 255, 0.1);
+  color: #f5f5f5;
+}
+
+.layout {
+  display: grid;
+  gap: 1.5rem;
+  padding: 2rem;
+  width: min(1200px, 100vw);
+  box-sizing: border-box;
+}
+
+@media (min-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(320px, 1fr) 2fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 18px 45px rgba(5, 20, 45, 0.35);
+  backdrop-filter: blur(9px);
+}
+
+.results {
+  max-height: calc(100vh - 4rem);
+  overflow: auto;
+}
+
+h1,
+ h2,
+ legend {
+  margin-top: 0;
+  color: #0c2f68;
+}
+
+body.dark h1,
+body.dark h2,
+body.dark legend {
+  color: #7db3ff;
+}
+
+.intro {
+  color: var(--muted);
+}
+
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.field input[type="number"],
+.field input[type="text"] {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+body.dark .field input[type="number"],
+body.dark .field input[type="text"] {
+  background-color: rgba(20, 26, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: inherit;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+}
+
+.checkbox input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+button {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(5, 20, 45, 0.2);
+}
+
+button:disabled {
+  background: var(--muted-light);
+  color: var(--muted);
+  cursor: wait;
+  box-shadow: none;
+}
+
+button.secondary {
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--panel-border);
+}
+
+.status {
+  min-height: 1.5rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+
+.status.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.results #results {
+  display: grid;
+  gap: 1rem;
+}
+
+.summary-card {
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.85);
+  display: grid;
+  gap: 0.75rem;
+}
+
+body.dark .summary-card {
+  background: rgba(20, 26, 40, 0.9);
+}
+
+.summary-grid {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.summary-grid span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.histogram {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.histogram-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.histogram-row .label {
+  width: 6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.histogram-row .bar {
+  flex: 1;
+  height: 1rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(47, 123, 255, 0.8), rgba(15, 209, 178, 0.9));
+  position: relative;
+}
+
+.histogram-row .bar.empty {
+  min-width: 0.5rem;
+  background: repeating-linear-gradient(
+      135deg,
+      rgba(47, 123, 255, 0.35),
+      rgba(47, 123, 255, 0.35) 6px,
+      rgba(255, 255, 255, 0.3) 6px,
+      rgba(255, 255, 255, 0.3) 12px
+    );
+  border: 1px dashed rgba(47, 123, 255, 0.6);
+}
+
+.histogram-row .value {
+  min-width: 3rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #f5f5f5;
+  }
+}
