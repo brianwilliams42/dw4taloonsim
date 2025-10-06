@@ -220,6 +220,29 @@ body.dark .summary-card {
   color: var(--results-text);
 }
 
+.results-overview .results-ranking {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.results-overview .results-ranking li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: baseline;
+  color: var(--results-text);
+}
+
+.results-overview .results-ranking li strong {
+  color: var(--results-emphasis);
+}
+
+.results-overview .results-ranking li span {
+  color: var(--results-muted);
+}
+
 .summary-grid {
   display: grid;
   gap: 0.35rem;
