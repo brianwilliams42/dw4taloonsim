@@ -327,9 +327,9 @@ function renderSummaries(summaries) {
     grid.appendChild(restockRow);
 
     const shopLoopsRow = createMetricRow(
-      'Shop profit loops',
-      `${summary.average_shop_cycles.toFixed(2)} cycles (≈ ${summary.average_shop_trips.toFixed(2)} trips; ${summary.average_shop_trips_per_cycle.toFixed(2)} trips/loop)`,
-      'Each loop collects sales, purchases new stock, and lets Neta sell items. Trips show how often Taloon returns to the shop within those loops.'
+      'Neta sleep loops',
+      `${summary.average_shop_cycles.toFixed(2)} loops (≈ ${summary.average_shop_trips.toFixed(2)} trips; ${summary.average_shop_trips_per_cycle.toFixed(2)} trips/loop)`,
+      'Each loop covers Taloon letting Neta sell items before checking in again. Trips show how often he actually made purchase runs during those loops.'
     );
     grid.appendChild(shopLoopsRow);
 
