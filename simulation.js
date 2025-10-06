@@ -1,4 +1,12 @@
-export const DEFAULT_TIME_BUCKET_SECONDS = 15;
+export const DEFAULT_TIME_BUCKET_SECONDS = 30;
+
+export function formatDuration(totalSeconds) {
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, totalSeconds) : 0;
+  const wholeSeconds = Math.floor(safeSeconds + Number.EPSILON);
+  const minutes = Math.floor(wholeSeconds / 60);
+  const seconds = wholeSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
 
 function createSeed(seedValue) {
   let seed = seedValue >>> 0;
@@ -47,7 +55,7 @@ function createRng(seed) {
   };
 }
 
-const CONSTANTS = {
+export const CONSTANTS = Object.freeze({
   IRON_PLATE_COST: 1500,
   IRON_PLATE_RESTOCK_COUNT: 7,
   IRON_PLATE_RESTOCK_TIME: 94.0,
@@ -98,7 +106,7 @@ const CONSTANTS = {
     { name: 'Clothes H', cost: 180, equippable: true },
     { name: 'Leather Armor', cost: 650, equippable: true },
   ],
-};
+});
 
 function runPhase1(rng, priceThreshold, minShopGold, startGold) {
   let gold = Number(startGold);
@@ -347,13 +355,9 @@ function populationStdDev(values) {
   return Math.sqrt(variance);
 }
 
-function bucketLabel(totalTime, bucketSize) {
+function bucketStart(totalTime, bucketSize) {
   const bucketIndex = Math.floor(totalTime / bucketSize);
-  const start = bucketIndex * bucketSize;
-  const end = start + bucketSize;
-  return `${start.toString().padStart(4, ' ')}-${end
-    .toString()
-    .padStart(4, ' ')}s`;
+  return bucketIndex * bucketSize;
 }
 
 export function runSimulation(config) {
@@ -407,17 +411,16 @@ export function runSimulation(config) {
 
     const bucketMap = new Map();
     for (const time of times) {
-      const label = bucketLabel(time, bucketSize);
-      bucketMap.set(label, (bucketMap.get(label) || 0) + 1);
+      const start = bucketStart(time, bucketSize);
+      bucketMap.set(start, (bucketMap.get(start) || 0) + 1);
     }
 
     const bucketCounts = Array.from(bucketMap.entries())
-      .sort((a, b) => {
-        const startA = parseInt(a[0].split('-')[0], 10);
-        const startB = parseInt(b[0].split('-')[0], 10);
-        return startA - startB;
-      })
-      .map(([label, count]) => ({ label, count }));
+      .sort((a, b) => a[0] - b[0])
+      .map(([start, count]) => ({
+        label: `${formatDuration(start)}-${formatDuration(start + bucketSize)}`,
+        count,
+      }));
 
     summaries.push({
       threshold,

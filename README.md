@@ -10,53 +10,48 @@ the Endor armor merchant and the subsequent shop phase with Neta.
 - Support for multiple armor offer acceptance thresholds in a single run.
 - Phase two modelling of purchase trips, sleeping nights, and probabilistic sales.
 - Optional use of the further shop and an additional trip cutoff before sleeping.
-- Aggregated statistics and 15-second time bucket distributions for each
-  threshold.
+- Aggregated statistics and histogram buckets for each threshold.
 
 ## Usage
 
-Run the CLI with Python 3.11 or newer:
+### Web interface
+
+The web interface runs entirely in the browser—no backend or custom server is
+required. Open `index.html` from the repository (or deploy the contents to a
+static host such as GitHub Pages) and configure simulations with the form
+inputs. Results update inline, complete with aggregated metrics and the
+histogram buckets for each armor threshold.
+
+### Command-line interface
+
+The CLI shares the exact simulation logic used by the web UI. It requires
+[Node.js](https://nodejs.org/) 18 or newer.
+
+Run the CLI directly with Node:
 
 ```bash
-python -m taloon_sim.cli [options]
+node cli.js --runs 500 --thresholds 1600,1700,1800 --use-far-shop
 ```
 
-Key options:
+Use `--help` to see the full list of options, including overrides for starting
+gold, target gold, sleep nights, the optional additional trip cutoff, RNG seed,
+and histogram bucket sizing.
 
-- `--start-gold`: Gold Taloon has when the simulation begins (default 30000).
-- `--min-shop-gold`: Gold required before purchasing the shop (default 35575).
-- `--final-target`: Gold required after collecting profits from Neta (default 26000).
-- `--thresholds`: Comma-separated list of armor merchant thresholds to
-  simulate. Each run reports results for all thresholds.
-- `--runs`: Number of Monte Carlo trials per threshold (default 1000).
-- `--nights`: Nights Taloon sleeps before collecting shop profits (default 3).
-- `--use-far-shop`: Allow trips to the further shop in phase two.
-- `--additional-trip-cutoff`: If provided, allows Taloon to make one extra
-  purchase trip before sleeping whenever he has at least this amount of gold
-  remaining.
-- `--seed`: Seed for deterministic simulations.
-
-Example:
+You can also install the executable locally:
 
 ```bash
-python -m taloon_sim.cli --runs 500 --thresholds 1600,1700,1800 --use-far-shop
+npm install --global .
+taloon-sim --runs 250 --thresholds 1570,1687
 ```
 
-### Web user interface
+## Project structure
 
-The web interface now runs entirely in the browser—no Python backend or custom
-server is required. Open `index.html` from the repository (or deploy the
-contents to a static host such as GitHub Pages) and configure simulations with
-the form inputs. Results update inline, complete with aggregated metrics and the
-15-second histogram buckets for each armor threshold.
-
-## Project Structure
-
-- `taloon_sim/constants.py`: All measured timing and cost constants.
-- `taloon_sim/phase1.py`: Logic for Taloon's iron plate sales.
-- `taloon_sim/phase2.py`: Logic for the shop phase with Neta.
-- `taloon_sim/simulation.py`: Orchestrates Monte Carlo runs and aggregates results.
-- `taloon_sim/cli.py`: Command line entry point.
+- `simulation.js`: Core Monte Carlo simulation logic shared by every interface.
+- `defaults.js`: Default configuration and validation constraints.
+- `app.js`: Browser UI wiring, form handling, and results presentation.
+- `cli.js`: Node-based CLI that reuses the browser simulation module.
+- `config.json`: Optional overrides for the browser UI (loaded when available).
+- `index.html`, `styles.css`: Static assets for the browser experience.
 
 ## License
 

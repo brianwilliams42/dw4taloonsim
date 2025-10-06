@@ -1,4 +1,9 @@
-import { runSimulation, DEFAULT_TIME_BUCKET_SECONDS } from './simulation.js';
+import {
+  runSimulation,
+  DEFAULT_TIME_BUCKET_SECONDS,
+  formatDuration,
+} from './simulation.js';
+import { getDefaultConfig } from './defaults.js';
 
 const form = document.getElementById('sim-form');
 const statusEl = document.getElementById('status');
@@ -10,25 +15,6 @@ const thresholdHint = document.getElementById('threshold-hint');
 let defaults = null;
 let constraints = null;
 let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
-
-const STATIC_CONFIG = {
-  defaults: {
-    start_gold: 30000,
-    min_shop_gold: 35575,
-    final_target: 26000,
-    armor_thresholds: [1570, 1593, 1617, 1640, 1664, 1687, 1710, 1734, 1757, 1781],
-    nights_to_sleep: 3,
-    runs: 1000,
-    additional_trip_cutoff: null,
-    seed: null,
-    use_far_shop: false,
-  },
-  constraints: {
-    min_threshold: 1265,
-    max_threshold: 1875,
-    time_bucket_seconds: DEFAULT_TIME_BUCKET_SECONDS,
-  },
-};
 
 function applyConfig(config) {
   defaults = config.defaults ?? null;
@@ -55,7 +41,7 @@ async function fetchDefaults() {
   }
 
   console.warn('Falling back to built-in defaults.');
-  applyConfig(STATIC_CONFIG);
+  applyConfig(getDefaultConfig());
 }
 
 function applyDefaults() {
@@ -73,7 +59,9 @@ function applyDefaults() {
   document.getElementById('seed').value = defaults.seed ?? '';
   document.getElementById('use-far-shop').checked = Boolean(defaults.use_far_shop);
   if (constraints) {
-    thresholdHint.textContent = `Valid armor thresholds: ${constraints.min_threshold} – ${constraints.max_threshold} (inclusive). Time buckets are ${constraints.time_bucket_seconds}s.`;
+    thresholdHint.textContent =
+      `Valid armor thresholds: ${constraints.min_threshold} – ${constraints.max_threshold} (inclusive). ` +
+      `Time buckets are ${formatDuration(constraints.time_bucket_seconds)} each.`;
   }
   clearStatus();
   resultsEl.innerHTML = '';
@@ -151,16 +139,20 @@ function buildHistogram(bucketCounts) {
     labelSpan.textContent = label;
     row.appendChild(labelSpan);
 
-    const bar = document.createElement('div');
-    bar.className = 'bar';
+    const barTrack = document.createElement('div');
+    barTrack.className = 'bar-track';
+    const barFill = document.createElement('div');
+    barFill.className = 'bar-fill';
     const rawWidth = maxCount === 0 ? 0 : (count / maxCount) * 100;
     const width = count === 0 ? 0 : Math.max(rawWidth, 6);
-    bar.style.width = `${width}%`;
+    barFill.style.width = `${width}%`;
     if (count === 0) {
-      bar.classList.add('empty');
+      barTrack.classList.add('empty');
+      barFill.classList.add('empty');
     }
-    bar.title = `${labelSpan.textContent}: ${count} run(s)`;
-    row.appendChild(bar);
+    barTrack.title = `${labelSpan.textContent}: ${count} run(s)`;
+    barTrack.appendChild(barFill);
+    row.appendChild(barTrack);
 
     const countSpan = document.createElement('span');
     countSpan.className = 'value';
@@ -212,7 +204,9 @@ function renderSummaries(summaries) {
 
     const details = document.createElement('details');
     const summaryEl = document.createElement('summary');
-    summaryEl.textContent = `Time distribution (${bucketSeconds}s buckets)`;
+    summaryEl.textContent = `Time distribution (${formatDuration(
+      bucketSeconds
+    )} buckets)`;
     details.appendChild(summaryEl);
     details.appendChild(buildHistogram(summary.bucket_counts));
     card.appendChild(details);
