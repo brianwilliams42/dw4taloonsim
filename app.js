@@ -16,6 +16,15 @@ let defaults = null;
 let constraints = null;
 let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
 
+function generateRandomSeed() {
+  if (globalThis.crypto?.getRandomValues) {
+    const buffer = new Uint32Array(1);
+    globalThis.crypto.getRandomValues(buffer);
+    return buffer[0] >>> 0;
+  }
+  return Math.floor(Math.random() * 0xffffffff) >>> 0;
+}
+
 function resolveBucketSeconds() {
   const configured = constraints?.time_bucket_seconds;
   if (typeof configured === 'number' && Number.isFinite(configured)) {
@@ -213,8 +222,8 @@ function renderSummaries(summaries) {
 
     const timeRow = createMetricRow(
       'Average time',
-      `${summary.average_time.toFixed(2)}s (σ ${summary.std_dev_time.toFixed(2)}s)`,
-      'Average in-game seconds required to finish each simulation. The σ value is the standard deviation across runs.'
+      `${formatDuration(summary.average_time)} (σ ${formatDuration(summary.std_dev_time)})`,
+      `Average in-game seconds required to finish each simulation. The σ value is the standard deviation across runs. (~${summary.average_time.toFixed(2)}s; σ ${summary.std_dev_time.toFixed(2)}s)`
     );
     grid.appendChild(timeRow);
 
@@ -259,6 +268,9 @@ form.addEventListener('submit', async (event) => {
   setStatus('Running simulations…');
 
   try {
+    const manualSeed = parseOptionalNumber(document.getElementById('seed').value);
+    const resolvedSeed = manualSeed ?? generateRandomSeed();
+
     const payload = {
       start_gold: Number.parseInt(document.getElementById('start-gold').value, 10),
       min_shop_gold: Number.parseInt(document.getElementById('min-shop-gold').value, 10),
@@ -267,15 +279,17 @@ form.addEventListener('submit', async (event) => {
       nights_to_sleep: Number.parseInt(document.getElementById('nights').value, 10),
       runs: Number.parseInt(document.getElementById('runs').value, 10),
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
-      seed: parseOptionalNumber(document.getElementById('seed').value),
+      seed: resolvedSeed,
       use_far_shop: document.getElementById('use-far-shop').checked,
       time_bucket_seconds: bucketSeconds,
     };
 
-    const summaries = runSimulation(payload);
+    const result = runSimulation(payload);
 
-    renderSummaries(summaries ?? []);
-    setStatus(`Completed ${payload.runs} run(s) for ${payload.armor_thresholds.length} threshold option(s).`);
+    renderSummaries(result?.summaries ?? []);
+    setStatus(
+      `Completed ${payload.runs} run(s) for ${payload.armor_thresholds.length} threshold option(s) using seed ${result?.seed ?? resolvedSeed}.`
+    );
   } catch (error) {
     console.error(error);
     setStatus(error.message || 'Simulation failed.', true);

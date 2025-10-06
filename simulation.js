@@ -2,7 +2,7 @@ export const DEFAULT_TIME_BUCKET_SECONDS = 30;
 
 export function formatDuration(totalSeconds) {
   const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, totalSeconds) : 0;
-  const wholeSeconds = Math.floor(safeSeconds + Number.EPSILON);
+  const wholeSeconds = Math.round(safeSeconds);
   const minutes = Math.floor(wholeSeconds / 60);
   const seconds = wholeSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -243,7 +243,6 @@ function runPhase2(rng, config) {
       break;
     }
 
-    profitCycles += 1;
     let tripsThisCycle = 0;
     let purchasedAny = false;
 
@@ -251,6 +250,10 @@ function runPhase2(rng, config) {
       const plan = planPurchases({ gold, useFarShop });
       if (plan.totalItems === 0) {
         break;
+      }
+
+      if (!purchasedAny) {
+        profitCycles += 1;
       }
 
       if (tripsThisCycle > 0) {
@@ -360,6 +363,17 @@ function bucketStart(totalTime, bucketSize) {
   return bucketIndex * bucketSize;
 }
 
+function normalizeSeed(seedValue) {
+  if (seedValue == null || seedValue === '') {
+    return 0;
+  }
+  const numeric = Number(seedValue);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Math.trunc(numeric) >>> 0;
+}
+
 export function runSimulation(config) {
   const summaries = [];
   const bucketSize =
@@ -367,13 +381,14 @@ export function runSimulation(config) {
       ? config.time_bucket_seconds
       : DEFAULT_TIME_BUCKET_SECONDS;
   const thresholds = Array.from(config.armor_thresholds || []);
+  const baseSeed = normalizeSeed(config.seed);
 
   for (let thresholdIndex = 0; thresholdIndex < thresholds.length; thresholdIndex += 1) {
     const threshold = thresholds[thresholdIndex];
     const results = [];
 
     for (let runIndex = 0; runIndex < config.runs; runIndex += 1) {
-      const seed = hashSeedComponents(config.seed, threshold, runIndex);
+      const seed = hashSeedComponents(baseSeed, threshold, runIndex);
       const rng = createRng(seed);
 
       const phase1Result = runPhase1(
@@ -438,5 +453,5 @@ export function runSimulation(config) {
     });
   }
 
-  return summaries;
+  return { seed: baseSeed, summaries };
 }

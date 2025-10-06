@@ -139,11 +139,16 @@ function formatNumber(value) {
 function main(argv) {
   try {
     const options = parseArgs(argv);
-    const summaries = runSimulation(options);
+    const result = runSimulation(options);
+    const summaries = result.summaries;
+
+    console.log(`Using base seed: ${result.seed}`);
 
     for (const summary of summaries) {
       console.log(`Threshold ${summary.threshold}:`);
-      console.log(`  Avg time: ${formatNumber(summary.average_time)}s (std dev ${formatNumber(summary.std_dev_time)}s)`);
+      console.log(
+        `  Avg time: ${formatDuration(summary.average_time)} (σ ${formatDuration(summary.std_dev_time)})`
+      );
       console.log(
         `  Avg iron-plate restock cycles: ${formatNumber(summary.average_armor_restock_cycles)}`
       );
