@@ -454,7 +454,7 @@ function runPhase2(rng, config) {
       pendingProfits = 0;
     }
 
-    if (gold >= finalTarget && netaInventory.length === 0) {
+    if (gold >= finalTarget) {
       break;
     }
 
