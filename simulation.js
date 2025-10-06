@@ -222,15 +222,20 @@ function planGreedyPurchase({
       break;
     }
 
+    const hasAbacusThreshold =
+      normalizedAbacus && normalizedAbacus.threshold != null;
+    const isAbacusItem = hasAbacusThreshold
+      ? ABACUS_NAME_PATTERN.test(candidate.item.name)
+      : false;
+
     const priceCutoff =
-      normalizedAbacus &&
-      normalizedAbacus.threshold != null &&
+      hasAbacusThreshold &&
       normalizedAbacus.cutoff != null &&
       abaciInPlan >= normalizedAbacus.threshold
         ? normalizedAbacus.cutoff
         : null;
 
-    if (priceCutoff != null && candidate.item.cost < priceCutoff) {
+    if (priceCutoff != null && !isAbacusItem && candidate.item.cost <= priceCutoff) {
       continue;
     }
 
@@ -243,13 +248,14 @@ function planGreedyPurchase({
       continue;
     }
 
-    const targetList = candidate.location === 'near' ? plan.nearItems : plan.farItems;
+    const targetList =
+      candidate.location === 'near' ? plan.nearItems : plan.farItems;
     for (let index = 0; index < maxCopies; index += 1) {
       targetList.push(candidate.item);
       plan.totalCost += candidate.item.cost;
       plan.totalItems += 1;
       availableGold -= candidate.item.cost;
-      if (normalizedAbacus && ABACUS_NAME_PATTERN.test(candidate.item.name)) {
+      if (isAbacusItem) {
         abaciInPlan += 1;
       }
     }
