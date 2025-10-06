@@ -1,3 +1,5 @@
+import { runSimulation, DEFAULT_TIME_BUCKET_SECONDS } from './simulation.js';
+
 const form = document.getElementById('sim-form');
 const statusEl = document.getElementById('status');
 const resultsEl = document.getElementById('results');
@@ -7,7 +9,7 @@ const thresholdHint = document.getElementById('threshold-hint');
 
 let defaults = null;
 let constraints = null;
-let bucketSeconds = 15;
+let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
 
 const STATIC_CONFIG = {
   defaults: {
@@ -24,7 +26,7 @@ const STATIC_CONFIG = {
   constraints: {
     min_threshold: 1265,
     max_threshold: 1875,
-    time_bucket_seconds: 15,
+    time_bucket_seconds: DEFAULT_TIME_BUCKET_SECONDS,
   },
 };
 
@@ -240,30 +242,12 @@ form.addEventListener('submit', async (event) => {
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
       seed: parseOptionalNumber(document.getElementById('seed').value),
       use_far_shop: document.getElementById('use-far-shop').checked,
+      time_bucket_seconds: bucketSeconds,
     };
 
-    const response = await fetch('simulate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const summaries = runSimulation(payload);
 
-    const contentType = response.headers.get('Content-Type') || '';
-    let data = null;
-    if (contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      const message = (await response.text()).trim();
-      throw new Error(
-        message || 'Simulation failed: server returned an unexpected response format.',
-      );
-    }
-
-    if (!response.ok) {
-      throw new Error(data?.error || 'Simulation failed.');
-    }
-
-    renderSummaries(data.summaries ?? []);
+    renderSummaries(summaries ?? []);
     setStatus(`Completed ${payload.runs} run(s) for ${payload.armor_thresholds.length} threshold option(s).`);
   } catch (error) {
     console.error(error);

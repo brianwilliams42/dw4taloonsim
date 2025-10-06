@@ -44,15 +44,11 @@ python -m taloon_sim.cli --runs 500 --thresholds 1600,1700,1800 --use-far-shop
 
 ### Web user interface
 
-To explore the simulator visually, launch the lightweight web server:
-
-```bash
-python -m taloon_sim.web --host 127.0.0.1 --port 8000
-```
-
-Open the reported URL in a browser to configure simulations with form inputs and
-inspect time distributions for each armor threshold. The web UI mirrors the CLI
-options and renders the 15-second bucket histograms for quick comparison.
+The web interface now runs entirely in the browser—no Python backend or custom
+server is required. Open `index.html` from the repository (or deploy the
+contents to a static host such as GitHub Pages) and configure simulations with
+the form inputs. Results update inline, complete with aggregated metrics and the
+15-second histogram buckets for each armor threshold.
 
 ## Project Structure
 
