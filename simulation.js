@@ -230,7 +230,7 @@ function runPhase2(rng, config) {
   }
 
   let timeSpent = 0;
-  let profitCycles = 0;
+  let netaCycles = 0;
   let totalTrips = 0;
   let pendingProfits = 0;
   let netaInventory = [];
@@ -253,10 +253,6 @@ function runPhase2(rng, config) {
       const plan = planPurchases({ gold, useFarShop });
       if (plan.totalItems === 0) {
         break;
-      }
-
-      if (!purchasedAny) {
-        profitCycles += 1;
       }
 
       if (tripsThisCycle > 0) {
@@ -313,6 +309,7 @@ function runPhase2(rng, config) {
     }
 
     timeSpent += CONSTANTS.TIME_RETURN_FOR_SLEEP;
+    netaCycles += 1;
     let nightsThisCycle = nightsToSleep;
     if (itemsAddedThisCycle > 0) {
       if (
@@ -355,7 +352,7 @@ function runPhase2(rng, config) {
   return {
     gold,
     timeSeconds: timeSpent,
-    profitCycles,
+    netaCycles,
     purchaseTrips: totalTrips,
   };
 }
@@ -431,7 +428,7 @@ export function runSimulation(config) {
       results.push({
         totalTime,
         armorRestockCycles: phase1Result.restockCycles,
-        shopProfitCycles: phase2Result.profitCycles,
+        netaCycles: phase2Result.netaCycles,
         shopPurchaseTrips: phase2Result.purchaseTrips,
       });
     }
@@ -440,11 +437,11 @@ export function runSimulation(config) {
     const armorRestockCycles = results.map(
       (result) => result.armorRestockCycles
     );
-    const shopProfitCycles = results.map((result) => result.shopProfitCycles);
+    const netaCycles = results.map((result) => result.netaCycles);
     const shopPurchaseTrips = results.map(
       (result) => result.shopPurchaseTrips
     );
-    const averageShopCycles = mean(shopProfitCycles);
+    const averageShopCycles = mean(netaCycles);
     const averageShopTrips = mean(shopPurchaseTrips);
     const averageTripsPerCycle =
       averageShopCycles === 0 ? 0 : averageShopTrips / averageShopCycles;

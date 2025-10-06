@@ -147,6 +147,10 @@ body.dark .field input[type="text"] {
   justify-content: flex-end;
 }
 
+.actions-top {
+  margin-bottom: 1rem;
+}
+
 button {
   font: inherit;
   font-weight: 600;

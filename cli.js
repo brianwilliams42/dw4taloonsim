@@ -171,7 +171,7 @@ function main(argv) {
         `  Avg iron-plate restock cycles: ${formatNumber(summary.average_armor_restock_cycles)}`
       );
       console.log(
-        `  Avg shop profit loops: ${formatNumber(summary.average_shop_cycles)} cycles (≈ ${formatNumber(summary.average_shop_trips)} trips; ${formatNumber(summary.average_shop_trips_per_cycle)} trips/loop)`
+        `  Avg Neta sleep loops: ${formatNumber(summary.average_shop_cycles)} loops (≈ ${formatNumber(summary.average_shop_trips)} trips; ${formatNumber(summary.average_shop_trips_per_cycle)} trips/loop)`
       );
       console.log(
         `  Time distribution (${formatDuration(options.time_bucket_seconds)} buckets):`
