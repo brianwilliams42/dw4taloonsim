@@ -77,6 +77,25 @@ body.dark legend {
   color: #7db3ff;
 }
 
+.repo-link {
+  margin: -0.5rem 0 1.25rem;
+  font-size: 0.95rem;
+}
+
+.repo-link a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.repo-link a:hover,
+.repo-link a:focus {
+  text-decoration: underline;
+}
+
+body.dark .repo-link a {
+  color: #dce7ff;
+}
+
 .intro {
   color: var(--muted);
 }
