@@ -23,26 +23,6 @@ const REQUIRED_WING_COST = 25;
 const REQUIRED_NEAR_ITEM_COST = 550;
 const REQUIRED_FAR_ITEM_COST = 180;
 
-function readIntegerInput(input) {
-  const value = Number.parseInt(input.value, 10);
-  return Number.isNaN(value) ? null : value;
-}
-
-function computeGuaranteedPostShopGold() {
-  const candidates = [readIntegerInput(startGoldInput), readIntegerInput(minShopGoldInput)];
-  let prePurchaseGold = null;
-  for (const value of candidates) {
-    if (value == null) {
-      continue;
-    }
-    prePurchaseGold = prePurchaseGold == null ? value : Math.max(prePurchaseGold, value);
-  }
-  if (prePurchaseGold == null) {
-    return null;
-  }
-  return prePurchaseGold - REQUIRED_SHOP_PURCHASE_GOLD - REQUIRED_WING_COST;
-}
-
 let defaults = null;
 let constraints = null;
 let bucketSeconds = DEFAULT_TIME_BUCKET_SECONDS;
@@ -127,13 +107,9 @@ function applyDefaults() {
 }
 
 function computeRequiredMinShopGold() {
-  const availableAfterShop = computeGuaranteedPostShopGold();
-  const shouldFavorNearShop =
-    !useFarShopInput.checked ||
-    (availableAfterShop != null && availableAfterShop >= REQUIRED_NEAR_ITEM_COST);
-  const cheapestItemCost = shouldFavorNearShop
-    ? REQUIRED_NEAR_ITEM_COST
-    : REQUIRED_FAR_ITEM_COST;
+  const cheapestItemCost = useFarShopInput.checked
+    ? REQUIRED_FAR_ITEM_COST
+    : REQUIRED_NEAR_ITEM_COST;
   return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_WING_COST + cheapestItemCost;
 }
 
@@ -156,19 +132,6 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
     );
   } else {
     minShopGoldInput.setCustomValidity('');
-  }
-
-  const availableAfterShop = computeGuaranteedPostShopGold();
-  if (
-    useFarShopInput.checked &&
-    availableAfterShop != null &&
-    availableAfterShop >= REQUIRED_NEAR_ITEM_COST
-  ) {
-    useFarShopInput.setCustomValidity(
-      'Taloon can afford to buy from the nearer shop immediately after purchasing the shop, so the farther shop cannot be selected first.'
-    );
-  } else {
-    useFarShopInput.setCustomValidity('');
   }
 
 }
@@ -272,29 +235,24 @@ function buildHistogram(bucketCounts) {
 
 minShopGoldInput.addEventListener('input', () => {
   enforceMinShopGoldRequirement();
-  useFarShopInput.reportValidity();
 });
 
 minShopGoldInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement();
-  useFarShopInput.reportValidity();
 });
 
 useFarShopInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement({ adjustValue: true });
   minShopGoldInput.reportValidity();
-  useFarShopInput.reportValidity();
   updateAbacusFieldRequirements();
 });
 
 startGoldInput.addEventListener('input', () => {
   enforceMinShopGoldRequirement();
-  useFarShopInput.reportValidity();
 });
 
 startGoldInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement();
-  useFarShopInput.reportValidity();
 });
 
 function updateAbacusFieldRequirements() {
