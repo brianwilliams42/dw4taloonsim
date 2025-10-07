@@ -16,7 +16,7 @@ export const DEFAULT_FORM_CONFIG = {
     runs: CONSTANTS.DEFAULT_SIMULATION_RUNS,
     additional_trip_cutoff: null,
     seed: null,
-    use_far_shop: false,
+    use_far_shop: true,
     purchase_strategy: DEFAULT_PURCHASE_STRATEGY,
     abacus_count_threshold: null,
     abacus_price_cutoff: null,

@@ -10,7 +10,7 @@ const baseConfig = {
   nights_to_sleep: 3,
   two_sleep_item_threshold: null,
   one_sleep_item_threshold: null,
-  use_far_shop: false,
+  use_far_shop: true,
   additional_trip_cutoff: null,
   seed: null,
   time_bucket_seconds: 30,

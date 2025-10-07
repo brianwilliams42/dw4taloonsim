@@ -20,7 +20,6 @@ function printHelp() {
     `  --nights <int>               Nights Taloon sleeps before collecting shop profits (default ${CONSTANTS.DEFAULT_SLEEP_NIGHTS}).\n` +
     `  --two-sleep-threshold <int>  Sleep twice instead of the default nights when giving Neta this many items or fewer.\n` +
     `  --one-sleep-threshold <int>  Sleep once instead of the default nights when giving Neta this many items or fewer.\n` +
-    `  --use-far-shop               Allow purchases from the further shop.\n` +
     `  --additional-trip-cutoff <int>  Minimum gold remaining to take an extra purchase trip before sleeping.\n` +
     `  --seed <int>                 Seed for deterministic simulations.\n` +
     `  --purchase-strategy <name>  Purchase planning algorithm (greedy, max-spend, abacus-greedy).\n` +
@@ -124,9 +123,6 @@ function parseArgs(argv) {
           args.shift(),
           { allowNull: true, min: 0 }
         );
-        break;
-      case '--use-far-shop':
-        options.use_far_shop = true;
         break;
       case '--additional-trip-cutoff':
         options.additional_trip_cutoff = parseInteger('additional trip cutoff', args.shift(), {
