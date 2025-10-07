@@ -13,14 +13,12 @@ const resetButton = document.getElementById('reset-btn');
 const thresholdHint = document.getElementById('threshold-hint');
 const startGoldInput = document.getElementById('start-gold');
 const minShopGoldInput = document.getElementById('min-shop-gold');
-const useFarShopInput = document.getElementById('use-far-shop');
 const purchaseStrategyInput = document.getElementById('purchase-strategy');
 const abacusCountInput = document.getElementById('abacus-count-threshold');
 const abacusPriceInput = document.getElementById('abacus-price-cutoff');
 
 const REQUIRED_SHOP_PURCHASE_GOLD = 35000;
 const REQUIRED_WING_COST = 25;
-const REQUIRED_NEAR_ITEM_COST = 550;
 const REQUIRED_FAR_ITEM_COST = 180;
 
 let defaults = null;
@@ -89,7 +87,6 @@ function applyDefaults() {
   document.getElementById('runs').value = defaults.runs;
   document.getElementById('trip-cutoff').value = defaults.additional_trip_cutoff ?? '';
   document.getElementById('seed').value = defaults.seed ?? '';
-  useFarShopInput.checked = Boolean(defaults.use_far_shop);
   purchaseStrategyInput.value = defaults.purchase_strategy;
   abacusCountInput.value = defaults.abacus_count_threshold ?? '';
   abacusPriceInput.value = defaults.abacus_price_cutoff ?? '';
@@ -107,10 +104,7 @@ function applyDefaults() {
 }
 
 function computeRequiredMinShopGold() {
-  const cheapestItemCost = useFarShopInput.checked
-    ? REQUIRED_FAR_ITEM_COST
-    : REQUIRED_NEAR_ITEM_COST;
-  return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_WING_COST + cheapestItemCost;
+  return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_WING_COST + REQUIRED_FAR_ITEM_COST;
 }
 
 function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
@@ -118,9 +112,9 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
   const currentValue = Number.parseInt(minShopGoldInput.value, 10);
 
   minShopGoldInput.title =
-    `Taloon needs at least ${requiredValue.toLocaleString()} gold before buying the shop with the current shop selection.`;
+    `Taloon needs at least ${requiredValue.toLocaleString()} gold before buying the shop, ensuring the farther shop is always an option when funds are tight.`;
 
-  if (adjustValue && (Number.isNaN(currentValue) || currentValue !== requiredValue)) {
+  if (adjustValue && (Number.isNaN(currentValue) || currentValue < requiredValue)) {
     minShopGoldInput.value = requiredValue;
   }
 
@@ -239,12 +233,6 @@ minShopGoldInput.addEventListener('input', () => {
 
 minShopGoldInput.addEventListener('change', () => {
   enforceMinShopGoldRequirement();
-});
-
-useFarShopInput.addEventListener('change', () => {
-  enforceMinShopGoldRequirement({ adjustValue: true });
-  minShopGoldInput.reportValidity();
-  updateAbacusFieldRequirements();
 });
 
 startGoldInput.addEventListener('input', () => {
@@ -423,7 +411,7 @@ form.addEventListener('submit', async (event) => {
       runs: Number.parseInt(document.getElementById('runs').value, 10),
       additional_trip_cutoff: parseOptionalNumber(document.getElementById('trip-cutoff').value),
       seed: resolvedSeed,
-      use_far_shop: useFarShopInput.checked,
+      use_far_shop: true,
       purchase_strategy: selectedStrategy,
       abacus_count_threshold: abacusCount,
       abacus_price_cutoff: abacusPrice,
