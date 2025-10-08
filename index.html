@@ -25,12 +25,18 @@
           </div>
           <fieldset>
             <legend>Phase breakpoints</legend>
-            <label class="field" title="Gold Taloon has on hand when the simulation begins.">
+            <label
+              class="field"
+              title="Gold Taloon has on hand when the simulation begins, with Taloon in Endor."
+            >
               <span>Starting gold</span>
               <input id="start-gold" name="start-gold" type="number" min="1" required />
             </label>
-            <label class="field" title="Minimum gold to accumulate from iron plate sales before purchasing the shop.">
-              <span>Minimum gold before buying shop</span>
+            <label
+              class="field"
+              title="Gold needed to stop selling to the armor merchant and immediately buy the shop."
+            >
+              <span>Gold to stop selling and buy shop</span>
               <input id="min-shop-gold" name="min-shop-gold" type="number" min="1" required />
             </label>
             <label class="field" title="Target amount of gold after Neta finishes selling the inventory.">
@@ -79,7 +85,10 @@
               <span>Monte Carlo runs per threshold</span>
               <input id="runs" name="runs" type="number" min="1" required />
             </label>
-            <label class="field" title="Optional gold amount below which Taloon skips extra shopping trips in the same loop.">
+            <label
+              class="field"
+              title="Leave blank for exactly one shopping trip. Otherwise Taloon makes a second trip if he has at least this much gold after the first trip."
+            >
               <span>Additional trip cutoff (optional)</span>
               <input id="trip-cutoff" name="trip-cutoff" type="number" min="0" placeholder="Leave blank for none" />
             </label>
