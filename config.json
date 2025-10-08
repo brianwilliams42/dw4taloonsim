@@ -3,7 +3,7 @@
     "start_gold": 29500,
     "min_shop_gold": 35550,
     "final_target": 26000,
-    "armor_thresholds": [1570, 1593, 1617, 1640, 1664, 1687, 1710, 1734, 1757, 1781],
+    "armor_thresholds": [1617, 1640, 1664, 1687, 1710, 1734],
     "nights_to_sleep": 3,
     "two_sleep_item_threshold": null,
     "one_sleep_item_threshold": null,
