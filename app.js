@@ -2,6 +2,7 @@ import {
   runSimulation,
   DEFAULT_TIME_BUCKET_SECONDS,
   formatDuration,
+  CONSTANTS,
 } from './simulation.js';
 import { getDefaultConfig } from './defaults.js';
 
@@ -11,6 +12,7 @@ const resultsEl = document.getElementById('results');
 const runButton = document.getElementById('run-btn');
 const resetButton = document.getElementById('reset-btn');
 const thresholdHint = document.getElementById('threshold-hint');
+const thresholdInput = document.getElementById('thresholds');
 const startGoldInput = document.getElementById('start-gold');
 const minShopGoldInput = document.getElementById('min-shop-gold');
 const purchaseStrategyInput = document.getElementById('purchase-strategy');
@@ -18,7 +20,6 @@ const abacusCountInput = document.getElementById('abacus-count-threshold');
 const abacusPriceInput = document.getElementById('abacus-price-cutoff');
 
 const REQUIRED_SHOP_PURCHASE_GOLD = 35000;
-const REQUIRED_WING_COST = 25;
 const REQUIRED_FAR_ITEM_COST = 180;
 
 let defaults = null;
@@ -78,7 +79,7 @@ function applyDefaults() {
   startGoldInput.value = defaults.start_gold;
   minShopGoldInput.value = defaults.min_shop_gold;
   document.getElementById('final-target').value = defaults.final_target;
-  document.getElementById('thresholds').value = defaults.armor_thresholds.join(', ');
+  thresholdInput.value = defaults.armor_thresholds.join(', ');
   document.getElementById('nights').value = defaults.nights_to_sleep;
   document.getElementById('two-sleep-threshold').value =
     defaults.two_sleep_item_threshold ?? '';
@@ -101,10 +102,14 @@ function applyDefaults() {
   resultsEl.innerHTML = '';
   enforceMinShopGoldRequirement({ adjustValue: true });
   updateAbacusFieldRequirements();
+  applyArmorThresholdValidity();
 }
 
 function computeRequiredMinShopGold() {
-  return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_WING_COST + REQUIRED_FAR_ITEM_COST;
+  // The return wing is refunded before validating the minimum shop gold, so it
+  // should not increase the required amount. The true minimum is the shop cost
+  // plus the cheapest required inventory item.
+  return REQUIRED_SHOP_PURCHASE_GOLD + REQUIRED_FAR_ITEM_COST;
 }
 
 function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
@@ -112,7 +117,7 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
   const currentValue = Number.parseInt(minShopGoldInput.value, 10);
 
   minShopGoldInput.title =
-    `Taloon needs at least ${requiredValue.toLocaleString()} gold before buying the shop, ensuring the farther shop is always an option when funds are tight.`;
+    `Taloon stops selling to the armor merchant once he has ${requiredValue.toLocaleString()} gold so he can immediately buy the shop and required inventory.`;
 
   if (adjustValue && (Number.isNaN(currentValue) || currentValue < requiredValue)) {
     minShopGoldInput.value = requiredValue;
@@ -140,12 +145,22 @@ function clearStatus() {
   statusEl.classList.remove('error');
 }
 
+function getValidArmorOfferThresholds() {
+  const configured = constraints?.valid_thresholds;
+  if (Array.isArray(configured) && configured.length > 0) {
+    return configured;
+  }
+  return CONSTANTS.ARMOR_BUY_PRICES;
+}
+
 function parseThresholds(raw) {
   if (!raw.trim()) {
     throw new Error('Provide at least one armor offer threshold.');
   }
   const min = constraints?.min_threshold ?? 0;
   const max = constraints?.max_threshold ?? Number.MAX_SAFE_INTEGER;
+  const validThresholds = getValidArmorOfferThresholds();
+  const validThresholdSet = new Set(validThresholds);
   const thresholds = raw
     .split(',')
     .map((part) => part.trim())
@@ -158,12 +173,29 @@ function parseThresholds(raw) {
       if (value < min || value > max) {
         throw new Error(`Armor thresholds must be between ${min} and ${max}.`);
       }
+      if (!validThresholdSet.has(value)) {
+        throw new Error(
+          `Armor thresholds must match the valid armor offer prices: ${validThresholds.join(', ')}.`
+        );
+      }
       return value;
     });
   if (thresholds.length === 0) {
     throw new Error('Provide at least one armor offer threshold.');
   }
   return thresholds;
+}
+
+function applyArmorThresholdValidity() {
+  if (!thresholdInput) {
+    return;
+  }
+  try {
+    parseThresholds(thresholdInput.value);
+    thresholdInput.setCustomValidity('');
+  } catch (error) {
+    thresholdInput.setCustomValidity(error.message || 'Invalid armor offer thresholds.');
+  }
 }
 
 function parseOptionalNumber(value) {
@@ -376,6 +408,7 @@ function renderSummaries(summaries) {
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearStatus();
+  applyArmorThresholdValidity();
   if (!form.reportValidity()) {
     setStatus('Please correct the highlighted fields before running the simulation.', true);
     return;
@@ -400,7 +433,7 @@ form.addEventListener('submit', async (event) => {
       start_gold: Number.parseInt(startGoldInput.value, 10),
       min_shop_gold: Number.parseInt(minShopGoldInput.value, 10),
       final_target: Number.parseInt(document.getElementById('final-target').value, 10),
-      armor_thresholds: parseThresholds(document.getElementById('thresholds').value),
+      armor_thresholds: parseThresholds(thresholdInput.value),
       nights_to_sleep: Number.parseInt(document.getElementById('nights').value, 10),
       two_sleep_item_threshold: parseOptionalNumber(
         document.getElementById('two-sleep-threshold').value
@@ -435,6 +468,10 @@ form.addEventListener('submit', async (event) => {
 resetButton.addEventListener('click', (event) => {
   event.preventDefault();
   applyDefaults();
+});
+
+thresholdInput.addEventListener('input', () => {
+  applyArmorThresholdValidity();
 });
 
 fetchDefaults().catch((error) => {
