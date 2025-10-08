@@ -89,9 +89,7 @@ export const CONSTANTS = Object.freeze({
   CRITICAL_RETURN_RANGE: [1.5, 2.0],
   DEFAULT_SIMULATION_RUNS: 1000,
   DEFAULT_SLEEP_NIGHTS: 3,
-  DEFAULT_ARMOR_THRESHOLDS: [
-    1570, 1593, 1617, 1640, 1664, 1687, 1710, 1734, 1757, 1781,
-  ],
+  DEFAULT_ARMOR_THRESHOLDS: [1617, 1640, 1664, 1687, 1710, 1734, 1757],
   CLOSER_SHOP_ITEMS: [
     { name: 'Chain Sickle', cost: 550, equippable: true },
     { name: 'Venomous Dagger', cost: 750, equippable: true },
