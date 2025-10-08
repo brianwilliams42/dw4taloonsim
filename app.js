@@ -117,7 +117,7 @@ function enforceMinShopGoldRequirement({ adjustValue = false } = {}) {
   const currentValue = Number.parseInt(minShopGoldInput.value, 10);
 
   minShopGoldInput.title =
-    `Taloon stops selling to the armor merchant once he has ${requiredValue.toLocaleString()} gold so he can immediately buy the shop and required inventory.`;
+    'Taloon stops selling to the armor merchant once he has enough gold to immediately buy the shop and required inventory.';
 
   if (adjustValue && (Number.isNaN(currentValue) || currentValue < requiredValue)) {
     minShopGoldInput.value = requiredValue;
