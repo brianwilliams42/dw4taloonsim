@@ -59,7 +59,7 @@ export const CONSTANTS = Object.freeze({
   IRON_PLATE_COST: 1500,
   IRON_PLATE_RESTOCK_COUNT: 7,
   IRON_PLATE_RESTOCK_TIME: 94.0,
-  IRON_PLATE_WING_COST: 50,
+  IRON_PLATE_WING_COST: 25,
   OFFER_TIME_ACCEPT: 4.9,
   OFFER_TIME_REJECT: 4.8,
   ARMOR_BUY_PRICES: [
@@ -69,7 +69,7 @@ export const CONSTANTS = Object.freeze({
   ],
   CRITICAL_SALE_CHANCE: 1.0 / 32.0,
   CRITICAL_SALE_RANGE: [2250, 3000],
-  DEFAULT_START_GOLD: 30000,
+  DEFAULT_START_GOLD: 29500,
   DEFAULT_FINAL_TARGET: 26000,
   SHOP_PURCHASE_COST: 35000,
   DEFAULT_MIN_SHOP_GOLD: 35575,
@@ -123,8 +123,13 @@ function runPhase1(rng, priceThreshold, minShopGold, startGold) {
   let restockCycles = 0;
   let offers = 0;
   let platesRemaining = 0;
+  let owesReturnWing = false;
 
-  while (gold < minShopGold) {
+  while (true) {
+    if (gold >= minShopGold && platesRemaining === 0 && !owesReturnWing) {
+      break;
+    }
+
     if (platesRemaining === 0) {
       gold -=
         CONSTANTS.IRON_PLATE_COST * CONSTANTS.IRON_PLATE_RESTOCK_COUNT +
@@ -132,6 +137,7 @@ function runPhase1(rng, priceThreshold, minShopGold, startGold) {
       timeSpent += CONSTANTS.IRON_PLATE_RESTOCK_TIME;
       platesRemaining = CONSTANTS.IRON_PLATE_RESTOCK_COUNT;
       restockCycles += 1;
+      owesReturnWing = true;
     }
 
     const [price] = rollOffer(rng);
@@ -141,12 +147,12 @@ function runPhase1(rng, priceThreshold, minShopGold, startGold) {
       gold += price;
       timeSpent += CONSTANTS.OFFER_TIME_ACCEPT;
       platesRemaining -= 1;
+      if (platesRemaining === 0 && owesReturnWing) {
+        gold -= CONSTANTS.IRON_PLATE_WING_COST;
+        owesReturnWing = false;
+      }
     } else {
       timeSpent += CONSTANTS.OFFER_TIME_REJECT;
-    }
-
-    if (platesRemaining === 0 && gold >= minShopGold) {
-      break;
     }
   }
 
